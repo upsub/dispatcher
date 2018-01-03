@@ -55,7 +55,7 @@ func (d *dispatcher) processMessage(
 	sender *client,
 ) {
 	dmsg := message.Decode(msg)
-	msgType, _ := dmsg.Header["upsub-message-type"]
+	msgType := dmsg.Header["upsub-message-type"]
 
 	switch msgType {
 	case message.SubscripeMessage:
