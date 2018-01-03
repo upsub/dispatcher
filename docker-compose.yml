@@ -1,0 +1,17 @@
+version: '3'
+services:
+  dispatcher:
+    build: .
+    image: dispatcher
+    volumes:
+      - .:/go/src/github.com/upsub/dispatcher
+    ports:
+      - '3000:3000'
+    environment:
+      - NATS_HOST=nats
+      - NATS_PORT=4222
+    links:
+      - nats
+
+  nats:
+    image: "nats:latest"
