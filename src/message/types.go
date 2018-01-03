@@ -1,8 +1,8 @@
 package message
 
 const (
-	TextMessage = "text"
-	BinaryMessage = "binary"
-	SubscripeMessage = "subscribe"
+	TextMessage        = "text"
+	BinaryMessage      = "binary"
+	SubscripeMessage   = "subscribe"
 	UnsubscribeMessage = "unsubscribe"
 )

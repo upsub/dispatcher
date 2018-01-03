@@ -7,15 +7,15 @@ import (
 
 // Event is an event with in the message payload
 type Event struct {
-	Name    string
-	Channel string
-	Body    string
+	Name    string `json:"name"`
+	Channel string `json:"channel"`
+	Body    string `json:"body"`
 }
 
 // Message is the message structure for communication between server and clients
 type Message struct {
-	Header  map[string]string
-	Payload []*Event
+	Header  map[string]string `json:"header"`
+	Payload []*Event          `json:"payload"`
 }
 
 // Create a new message with cunstom header and events
