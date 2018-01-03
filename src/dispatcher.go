@@ -2,8 +2,9 @@ package dispatcher
 
 import (
 	"log"
-	"github.com/upsub/dispatcher/src/util"
+
 	"github.com/upsub/dispatcher/src/message"
+	"github.com/upsub/dispatcher/src/util"
 )
 
 type dispatcher struct {
@@ -78,7 +79,7 @@ func (d *dispatcher) dispatch(
 	responseHeaders map[string]string,
 	sender *client,
 ) {
-	for _, event :=  range msg.Payload {
+	for _, event := range msg.Payload {
 		for client := range d.clients {
 			if sender != nil && sender == client {
 				continue
@@ -94,7 +95,7 @@ func (d *dispatcher) dispatch(
 
 			responseMessage, err := message.Encode(
 				message.Create(
-					util.Merge(responseHeaders, map[string]string{ "type": message.TextMessage }),
+					util.Merge(responseHeaders, map[string]string{"type": message.TextMessage}),
 					[]*message.Event{event},
 				),
 			)

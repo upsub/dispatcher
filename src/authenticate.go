@@ -3,11 +3,12 @@ package dispatcher
 import (
 	"log"
 	"net/http"
+
 	"github.com/upsub/dispatcher/src/util"
 )
 
 func validateAppID(config *config, appID string) bool {
-	for id, _ := range config.auths {
+	for id := range config.auths {
 		if id == appID {
 			return true
 		}
@@ -81,7 +82,6 @@ func authenticate(c *config, d *dispatcher) http.HandlerFunc {
 			http.Error(w, "Invalid Secret key", 401)
 			return
 		}
-
 
 		if ok := validatePublicKey(c, r.Header.Get("public"), r.Header.Get("origin")); !ok {
 			log.Print("Invalid public key or origin")
