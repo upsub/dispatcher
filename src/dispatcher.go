@@ -30,9 +30,16 @@ func (d *dispatcher) serve() {
 			d.connect(client)
 		case client := <-d.unregister:
 			d.disconnect(client)
-		case message := <-d.broadcast:
-			msg, client := message()
-			d.processMessage(msg, client)
+		case payload := <-d.broadcast:
+			msg, client := payload()
+			dmsg, err := message.Decode(msg)
+
+			if err != nil {
+				log.Print("[MESSAGE DECODE FAILED] ", err)
+				continue
+			}
+
+			d.processMessage(dmsg, client)
 		}
 	}
 }
@@ -51,24 +58,32 @@ func (d *dispatcher) disconnect(client *client) {
 }
 
 func (d *dispatcher) processMessage(
-	msg []byte,
+	msg *message.Message,
 	sender *client,
 ) {
-	dmsg := message.Decode(msg)
-	msgType := dmsg.Header["upsub-message-type"]
+	if msg.Header == nil {
+		log.Print("[INVALID MESSAGE] ", msg)
+		return
+	}
+
+	msgType := msg.Header.Get("upsub-message-type")
 
 	switch msgType {
 	case message.SubscripeMessage:
-		sender.subscribe(dmsg.Header["upsub-channel"])
+		log.Print("[SUBSCRIBE] ", msg.Payload)
+		sender.subscribe(msg.Payload)
 		break
 	case message.UnsubscribeMessage:
-		sender.unsubscribe(dmsg.Header["upsub-channel"])
+		log.Print("[UNSUBSCRIBE] ", msg.Payload)
+		sender.unsubscribe(msg.Payload)
 		break
 	case message.TextMessage:
 	default:
+		responseMessage := message.Create(msg.Payload)
+		responseMessage.Header = msg.Header
+
 		d.dispatch(
-			dmsg,
-			map[string]string{"upsub-sender-id": sender.id},
+			responseMessage,
 			sender,
 		)
 	}
@@ -76,36 +91,29 @@ func (d *dispatcher) processMessage(
 
 func (d *dispatcher) dispatch(
 	msg *message.Message,
-	responseHeaders map[string]string,
 	sender *client,
 ) {
-	for _, event := range msg.Payload {
-		for client := range d.clients {
-			if sender != nil && sender == client {
-				continue
-			}
-
-			if client.appID != sender.appID {
-				continue
-			}
-
-			if ok := util.Contains(client.subscriptions, event.Channel); !ok {
-				continue
-			}
-
-			responseMessage, err := message.Encode(
-				message.Create(
-					util.Merge(responseHeaders, map[string]string{"type": message.TextMessage}),
-					[]*message.Event{event},
-				),
-			)
-
-			if err != nil {
-				log.Print("[FAILED]", err)
-				continue
-			}
-
-			client.send <- responseMessage
+	for client := range d.clients {
+		if sender != nil && sender == client {
+			continue
 		}
+
+		if sender != nil && client.appID != sender.appID {
+			continue
+		}
+
+		if ok := util.Contains(client.subscriptions, msg.Header.Get("upsub-channel")); !ok {
+			continue
+		}
+
+		responseMessage, err := message.Encode(msg)
+
+		if err != nil {
+			log.Print("[FAILED]", err)
+			continue
+		}
+
+		log.Print("[SEND] ", responseMessage)
+		client.send <- responseMessage
 	}
 }

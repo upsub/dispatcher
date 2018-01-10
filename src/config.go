@@ -16,15 +16,9 @@ type config struct {
 	pingInterval   time.Duration
 	auths          map[string]*authConfig
 	redis          *natsConfig
-	mongo          *mongoConfig
 }
 
 type natsConfig struct {
-	host string
-	port string
-}
-
-type mongoConfig struct {
 	host string
 	port string
 }
@@ -51,23 +45,6 @@ func createNatsConfig() *natsConfig {
 	}
 
 	return &natsConfig{host, port}
-}
-
-func createMongoConfig() *mongoConfig {
-	var (
-		host = "localhost"
-		port = "27017"
-	)
-
-	if value, ok := os.LookupEnv("MONGO_HOST"); ok {
-		host = value
-	}
-
-	if value, ok := os.LookupEnv("MONGO_PORT"); ok {
-		port = value
-	}
-
-	return &mongoConfig{host, port}
 }
 
 func createAuthConfig() *authConfig {
@@ -142,6 +119,5 @@ func createConfig() *config {
 		pingInterval:   pingInterval,
 		auths:          auths,
 		redis:          createNatsConfig(),
-		mongo:          createMongoConfig(),
 	}
 }

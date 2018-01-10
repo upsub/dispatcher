@@ -46,7 +46,6 @@ func createClient(
 	d.register <- client
 	go client.read()
 	go client.write()
-	client.subscribe("")
 
 	return client
 }
@@ -80,8 +79,10 @@ func (c *client) subscribe(channel string) {
 func (c *client) unsubscribe(channel string) {
 	var tmp []string
 
-	for _, channel := range c.subscriptions {
-		tmp = append(tmp, channel)
+	for _, current := range c.subscriptions {
+		if current != channel {
+			tmp = append(tmp, channel)
+		}
 	}
 
 	c.subscriptions = tmp

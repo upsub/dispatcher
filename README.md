@@ -17,22 +17,60 @@ Message types:
   - unsubscribe
   - ping
   - pong
+  - batch
   - text
   - binary
 
 #### Message structure
-A message contains headers and a payload of events.
+A message contains headers and a payload.
 ```json
 {
   "headers": {
-    "upsub-app-id": "string",
-    "upsub-message-type": "string"
+    "upsub-message-type": "string",
+    "upsub-channel":      "string|optional",
   },
-  "payload": [{
-    "event": "string",
-    "channel": "string",
-    "body": "string"
-  }]
+  "payload": "string"
+}
+```
+
+
+Example of upsub messages
+```js
+// Subscribe message
+{
+  "headers": {
+    "upsub-message-type": "subscribe"
+  },
+  "payload": "some-channel"
+}
+
+// Text message
+{
+  "headers": {
+    "upsub-message-type": "text",
+    "upsub-channel": "/hello"
+  },
+  "payload": "Hello world!"
+}
+
+// Batch message
+{
+  "headers": {
+    "upsub-message-type": "batch",
+  },
+  "payload": JSON.stringify([{
+    "headers": {
+      "upsub-message-type": "text",
+      "upsub-channel": "/hello"
+    },
+    "payload": "Hello"
+  }, {
+    "headers": {
+      "upsub-message-type": "text",
+      "upsub-channel": "/world"
+    },
+    "payload": "World"
+  }])
 }
 ```
 
