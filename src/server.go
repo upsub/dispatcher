@@ -2,14 +2,16 @@ package dispatcher
 
 import (
 	"net/http"
+
+	"github.com/upsub/dispatcher/src/config"
 )
 
 // Listen starts the dispatcher
 func Listen() {
-	config := createConfig()
+	config := config.Create()
 	dispatcher := createDispatcher()
 	go dispatcher.serve()
 
 	http.HandleFunc("/", authenticate(config, dispatcher, upgradeHandler))
-	http.ListenAndServe(":"+config.port, nil)
+	http.ListenAndServe(":"+config.Port, nil)
 }

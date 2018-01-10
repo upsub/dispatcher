@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/upsub/dispatcher/src/config"
 	"github.com/upsub/dispatcher/src/util"
 )
 
@@ -21,7 +22,7 @@ type client struct {
 	subscriptions []string
 	send          chan []byte
 	connection    *websocket.Conn
-	config        *config
+	config        *config.Config
 	dispatcher    *dispatcher
 }
 
@@ -30,7 +31,7 @@ func createClient(
 	appID string,
 	name string,
 	connection *websocket.Conn,
-	c *config,
+	c *config.Config,
 	d *dispatcher,
 ) *client {
 	client := &client{
@@ -52,7 +53,7 @@ func createClient(
 }
 
 func upgradeHandler(
-	config *config,
+	config *config.Config,
 	dispatcher *dispatcher,
 	w http.ResponseWriter,
 	r *http.Request,
@@ -94,7 +95,7 @@ func (c *client) hasSubscription(channel string) bool {
 }
 
 func (c *client) write() {
-	ticker := time.NewTicker(c.config.pingInterval)
+	ticker := time.NewTicker(c.config.PingInterval)
 	defer func() {
 		ticker.Stop()
 		c.connection.Close()
@@ -120,7 +121,7 @@ func (c *client) write() {
 				return
 			}
 		case <-ticker.C:
-			c.connection.SetWriteDeadline(time.Now().Add(c.config.writeTimeout))
+			c.connection.SetWriteDeadline(time.Now().Add(c.config.WriteTimeout))
 			if err := c.connection.WriteMessage(websocket.PingMessage, nil); err != nil {
 				return
 			}
@@ -134,13 +135,13 @@ func (c *client) read() {
 		c.connection.Close()
 	}()
 
-	if c.config.maxMessageSize > 0 {
-		c.connection.SetReadLimit(c.config.maxMessageSize)
+	if c.config.MaxMessageSize > 0 {
+		c.connection.SetReadLimit(c.config.MaxMessageSize)
 	}
 
-	c.connection.SetReadDeadline(time.Now().Add(c.config.timeout))
+	c.connection.SetReadDeadline(time.Now().Add(c.config.Timeout))
 	c.connection.SetPongHandler(func(string) error {
-		c.connection.SetReadDeadline(time.Now().Add(c.config.timeout))
+		c.connection.SetReadDeadline(time.Now().Add(c.config.Timeout))
 		return nil
 	})
 

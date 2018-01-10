@@ -4,11 +4,12 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/upsub/dispatcher/src/config"
 	"github.com/upsub/dispatcher/src/util"
 )
 
-func validateAppID(config *config, appID string) bool {
-	for id := range config.auths {
+func validateAppID(config *config.Config, appID string) bool {
+	for id := range config.Auths {
 		if id == appID {
 			return true
 		}
@@ -17,9 +18,9 @@ func validateAppID(config *config, appID string) bool {
 	return false
 }
 
-func validateSecretKey(config *config, secret string) bool {
-	for _, auth := range config.auths {
-		if auth.secret == secret {
+func validateSecretKey(config *config.Config, secret string) bool {
+	for _, auth := range config.Auths {
+		if auth.Secret == secret {
 			return true
 		}
 	}
@@ -27,9 +28,9 @@ func validateSecretKey(config *config, secret string) bool {
 	return false
 }
 
-func validatePublicKey(config *config, public string, origin string) bool {
-	for _, auth := range config.auths {
-		if auth.public == public && util.Contains(auth.origins, origin) {
+func validatePublicKey(config *config.Config, public string, origin string) bool {
+	for _, auth := range config.Auths {
+		if auth.Public == public && util.Contains(auth.Origins, origin) {
 			return true
 		}
 	}
@@ -37,16 +38,16 @@ func validatePublicKey(config *config, public string, origin string) bool {
 	return false
 }
 
-type controller func(*config, *dispatcher, http.ResponseWriter, *http.Request)
+type controller func(*config.Config, *dispatcher, http.ResponseWriter, *http.Request)
 
-func authenticate(c *config, d *dispatcher, next controller) http.HandlerFunc {
+func authenticate(c *config.Config, d *dispatcher, next controller) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if query := r.URL.Query(); len(query) > 0 {
 			r.Header.Set("upsub-app-id", query.Get("upsub-app-id"))
 			r.Header.Set("upsub-public", query.Get("upsub-public"))
 		}
 
-		if len(c.auths) == 0 {
+		if len(c.Auths) == 0 {
 			next(c, d, w, r)
 			return
 		}

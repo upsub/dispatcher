@@ -1,4 +1,4 @@
-package dispatcher
+package config
 
 import (
 	"log"
@@ -8,29 +8,32 @@ import (
 	"time"
 )
 
-type config struct {
-	port           string
-	maxMessageSize int64
-	timeout        time.Duration
-	writeTimeout   time.Duration
-	pingInterval   time.Duration
-	auths          map[string]*authConfig
-	redis          *natsConfig
+// Config is the main configuration struct
+type Config struct {
+	Port           string
+	MaxMessageSize int64
+	Timeout        time.Duration
+	WriteTimeout   time.Duration
+	PingInterval   time.Duration
+	Auths          map[string]*AuthConfig
+	Nats           *NatsConfig
 }
 
-type natsConfig struct {
-	host string
-	port string
+// NatsConfig configuration for the NATS message bus
+type NatsConfig struct {
+	Host string
+	Port string
 }
 
-type authConfig struct {
-	appID   string
-	secret  string
-	public  string
-	origins []string
+// AuthConfig handles authentication configuration
+type AuthConfig struct {
+	AppID   string
+	Secret  string
+	Public  string
+	Origins []string
 }
 
-func createNatsConfig() *natsConfig {
+func createNatsConfig() *NatsConfig {
 	var (
 		host = "localhost"
 		port = "6379"
@@ -44,39 +47,39 @@ func createNatsConfig() *natsConfig {
 		port = value
 	}
 
-	return &natsConfig{host, port}
+	return &NatsConfig{host, port}
 }
 
-func createAuthConfig() *authConfig {
-	config := &authConfig{}
+func createAuthConfig() *AuthConfig {
+	config := &AuthConfig{}
 
 	if value, ok := os.LookupEnv("AUTH_APP_ID"); ok {
-		config.appID = value
+		config.AppID = value
 	}
 
 	if value, ok := os.LookupEnv("AUTH_SECRET"); ok {
-		config.secret = value
+		config.Secret = value
 	}
 
 	if value, ok := os.LookupEnv("AUTH_PUBLIC"); ok {
-		config.public = value
+		config.Public = value
 	}
 
 	if value, ok := os.LookupEnv("AUTH_ORIGINS"); ok {
-		config.origins = strings.Split(value, ",")
+		config.Origins = strings.Split(value, ",")
 	}
 
 	return config
 }
 
-func createConfig() *config {
+func Create() *Config {
 	var (
 		port           = "5000"
 		maxMessageSize int64
 		timeout        = 10 * time.Second
 		writeTimeout   = 10 * time.Second
 		pingInterval   = (timeout * 9) / 10
-		auths          = map[string]*authConfig{}
+		auths          = map[string]*AuthConfig{}
 	)
 
 	if value, ok := os.LookupEnv("PORT"); ok {
@@ -107,17 +110,17 @@ func createConfig() *config {
 		}
 	}
 
-	if auth := createAuthConfig(); auth.appID != "" {
-		auths[auth.appID] = auth
+	if auth := createAuthConfig(); auth.AppID != "" {
+		auths[auth.AppID] = auth
 	}
 
-	return &config{
-		port:           port,
-		maxMessageSize: maxMessageSize,
-		timeout:        timeout,
-		writeTimeout:   writeTimeout,
-		pingInterval:   pingInterval,
-		auths:          auths,
-		redis:          createNatsConfig(),
+	return &Config{
+		Port:           port,
+		MaxMessageSize: maxMessageSize,
+		Timeout:        timeout,
+		WriteTimeout:   writeTimeout,
+		PingInterval:   pingInterval,
+		Auths:          auths,
+		Nats:           createNatsConfig(),
 	}
 }
