@@ -2,6 +2,7 @@ package dispatcher
 
 import (
 	"log"
+	"net/http"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -48,6 +49,28 @@ func createClient(
 	client.subscribe("")
 
 	return client
+}
+
+func upgradeHandler(
+	config *config,
+	dispatcher *dispatcher,
+	w http.ResponseWriter,
+	r *http.Request,
+) {
+	conn, err := upgrader.Upgrade(w, r, nil)
+
+	if err != nil {
+		return
+	}
+
+	createClient(
+		r.Header.Get("Sec-Websocket-Key"),
+		r.Header.Get("upsub-app-id"),
+		r.Header.Get("upsub-connection-name"),
+		conn,
+		config,
+		dispatcher,
+	)
 }
 
 func (c *client) subscribe(channel string) {

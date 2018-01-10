@@ -37,29 +37,9 @@ func validatePublicKey(config *config, public string, origin string) bool {
 	return false
 }
 
-func accept(
-	config *config,
-	dispatcher *dispatcher,
-	w http.ResponseWriter,
-	r *http.Request,
-) {
-	conn, err := upgrader.Upgrade(w, r, nil)
+type controller func(*config, *dispatcher, http.ResponseWriter, *http.Request)
 
-	if err != nil {
-		return
-	}
-
-	createClient(
-		r.Header.Get("Sec-Websocket-Key"),
-		r.Header.Get("upsub-app-id"),
-		r.Header.Get("upsub-connection-name"),
-		conn,
-		config,
-		dispatcher,
-	)
-}
-
-func authenticate(c *config, d *dispatcher) http.HandlerFunc {
+func authenticate(c *config, d *dispatcher, next controller) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if query := r.URL.Query(); len(query) > 0 {
 			r.Header.Set("upsub-app-id", query.Get("upsub-app-id"))
@@ -67,7 +47,7 @@ func authenticate(c *config, d *dispatcher) http.HandlerFunc {
 		}
 
 		if len(c.auths) == 0 {
-			accept(c, d, w, r)
+			next(c, d, w, r)
 			return
 		}
 
@@ -89,6 +69,6 @@ func authenticate(c *config, d *dispatcher) http.HandlerFunc {
 			return
 		}
 
-		accept(c, d, w, r)
+		next(c, d, w, r)
 	}
 }

@@ -10,6 +10,6 @@ func Listen() {
 	dispatcher := createDispatcher()
 	go dispatcher.serve()
 
-	http.HandleFunc("/", authenticate(config, dispatcher))
+	http.HandleFunc("/", authenticate(config, dispatcher, upgradeHandler))
 	http.ListenAndServe(":"+config.port, nil)
 }

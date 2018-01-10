@@ -5,4 +5,6 @@ const (
 	BinaryMessage      = "binary"
 	SubscripeMessage   = "subscribe"
 	UnsubscribeMessage = "unsubscribe"
+	PingMessage        = "ping"
+	PongMessage        = "pong"
 )

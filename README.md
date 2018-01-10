@@ -15,6 +15,8 @@
 Message types:
   - subscribe
   - unsubscribe
+  - ping
+  - pong
   - text
   - binary
 
