@@ -10,6 +10,17 @@
 - Authenticate with origin from browser
 - Protocol JSON web tokens?
 
+### Upgrade headers
+```js
+{
+  "upsub-app-id": "string",
+  "upsub-secret": "string",
+  "upsub-public": "string",
+  "upsub-client": "string|node|browser|ruby|php|java|swift|go|..."
+  "upsub-version": "string",
+}
+```
+
 ## Message specification
 
 Message types:

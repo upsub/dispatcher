@@ -4,7 +4,6 @@ import (
 	"log"
 
 	"github.com/upsub/dispatcher/src/message"
-	"github.com/upsub/dispatcher/src/util"
 )
 
 type dispatcher struct {
@@ -78,7 +77,6 @@ func (d *dispatcher) processMessage(
 		sender.unsubscribe(msg.Payload)
 		break
 	case message.TextMessage:
-	default:
 		responseMessage := message.Create(msg.Payload)
 		responseMessage.Header = msg.Header
 
@@ -102,7 +100,7 @@ func (d *dispatcher) dispatch(
 			continue
 		}
 
-		if ok := util.Contains(client.subscriptions, msg.Header.Get("upsub-channel")); !ok {
+		if ok := client.hasSubscription(msg.Header.Get("upsub-channel")); !ok {
 			continue
 		}
 

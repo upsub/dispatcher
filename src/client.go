@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/upsub/dispatcher/src/util"
 )
 
 var upgrader = websocket.Upgrader{
@@ -86,6 +87,10 @@ func (c *client) unsubscribe(channel string) {
 	}
 
 	c.subscriptions = tmp
+}
+
+func (c *client) hasSubscription(channel string) bool {
+	return util.Contains(c.subscriptions, channel)
 }
 
 func (c *client) write() {
