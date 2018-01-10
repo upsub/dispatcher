@@ -1,10 +1,11 @@
-package dispatcher
+package server
 
 import (
 	"log"
 	"net/http"
 
 	"github.com/upsub/dispatcher/src/config"
+	"github.com/upsub/dispatcher/src/dispatcher"
 	"github.com/upsub/dispatcher/src/util"
 )
 
@@ -38,9 +39,9 @@ func validatePublicKey(config *config.Config, public string, origin string) bool
 	return false
 }
 
-type controller func(*config.Config, *dispatcher, http.ResponseWriter, *http.Request)
+type controller func(*config.Config, *dispatcher.Dispatcher, http.ResponseWriter, *http.Request)
 
-func authenticate(c *config.Config, d *dispatcher, next controller) http.HandlerFunc {
+func authenticate(c *config.Config, d *dispatcher.Dispatcher, next controller) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if query := r.URL.Query(); len(query) > 0 {
 			r.Header.Set("upsub-app-id", query.Get("upsub-app-id"))

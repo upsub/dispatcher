@@ -15,7 +15,7 @@ var upgrader = websocket.Upgrader{
 	WriteBufferSize: 1024,
 }
 
-type client struct {
+type connection struct {
 	id            string
 	name          string
 	appID         string
@@ -23,38 +23,39 @@ type client struct {
 	send          chan []byte
 	connection    *websocket.Conn
 	config        *config.Config
-	dispatcher    *dispatcher
+	dispatcher    *Dispatcher
 }
 
-func createClient(
+func createConnection(
 	id string,
 	appID string,
 	name string,
-	connection *websocket.Conn,
+	wsConnection *websocket.Conn,
 	c *config.Config,
-	d *dispatcher,
-) *client {
-	client := &client{
+	d *Dispatcher,
+) *connection {
+	newConnection := &connection{
 		id:            id,
 		name:          name,
 		appID:         appID,
 		subscriptions: []string{},
 		send:          make(chan []byte, 256),
-		connection:    connection,
+		connection:    wsConnection,
 		config:        c,
 		dispatcher:    d,
 	}
 
-	d.register <- client
-	go client.read()
-	go client.write()
+	d.register <- newConnection
+	go newConnection.read()
+	go newConnection.write()
 
-	return client
+	return newConnection
 }
 
-func upgradeHandler(
+// UpgradeHandler http request to websocket protocol
+func (d *Dispatcher) UpgradeHandler(
 	config *config.Config,
-	dispatcher *dispatcher,
+	dispatcher *Dispatcher,
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
@@ -64,7 +65,7 @@ func upgradeHandler(
 		return
 	}
 
-	createClient(
+	createConnection(
 		r.Header.Get("Sec-Websocket-Key"),
 		r.Header.Get("upsub-app-id"),
 		r.Header.Get("upsub-connection-name"),
@@ -74,11 +75,11 @@ func upgradeHandler(
 	)
 }
 
-func (c *client) subscribe(channel string) {
+func (c *connection) subscribe(channel string) {
 	c.subscriptions = append(c.subscriptions, channel)
 }
 
-func (c *client) unsubscribe(channel string) {
+func (c *connection) unsubscribe(channel string) {
 	var tmp []string
 
 	for _, current := range c.subscriptions {
@@ -90,11 +91,11 @@ func (c *client) unsubscribe(channel string) {
 	c.subscriptions = tmp
 }
 
-func (c *client) hasSubscription(channel string) bool {
+func (c *connection) hasSubscription(channel string) bool {
 	return util.Contains(c.subscriptions, channel)
 }
 
-func (c *client) write() {
+func (c *connection) write() {
 	ticker := time.NewTicker(c.config.PingInterval)
 	defer func() {
 		ticker.Stop()
@@ -129,7 +130,7 @@ func (c *client) write() {
 	}
 }
 
-func (c *client) read() {
+func (c *connection) read() {
 	defer func() {
 		c.dispatcher.unregister <- c
 		c.connection.Close()
@@ -156,7 +157,7 @@ func (c *client) read() {
 			break
 		}
 
-		c.dispatcher.broadcast <- (func() ([]byte, *client) {
+		c.dispatcher.broadcast <- (func() ([]byte, *connection) {
 			return message, c
 		})
 	}

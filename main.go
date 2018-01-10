@@ -5,5 +5,5 @@ import (
 )
 
 func main() {
-	dispatcher.Listen()
+	server.Listen()
 }
