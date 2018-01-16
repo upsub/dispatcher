@@ -80,14 +80,14 @@ func (d *Dispatcher) processMessage(
 		responseMessage := message.Create(msg.Payload)
 		responseMessage.Header = msg.Header
 
-		d.dispatch(
+		d.Dispatch(
 			responseMessage,
 			sender,
 		)
 	}
 }
 
-func (d *Dispatcher) dispatch(
+func (d *Dispatcher) Dispatch(
 	msg *message.Message,
 	sender *connection,
 ) {

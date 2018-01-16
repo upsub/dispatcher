@@ -2,18 +2,12 @@ package dispatcher
 
 import (
 	"log"
-	"net/http"
 	"time"
 
 	"github.com/gorilla/websocket"
 	"github.com/upsub/dispatcher/src/config"
 	"github.com/upsub/dispatcher/src/util"
 )
-
-var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
-}
 
 type connection struct {
 	id            string
@@ -26,14 +20,15 @@ type connection struct {
 	dispatcher    *Dispatcher
 }
 
-func createConnection(
+// CreateConnection establishes a new websocket connection
+func CreateConnection(
 	id string,
 	appID string,
 	name string,
 	wsConnection *websocket.Conn,
 	c *config.Config,
 	d *Dispatcher,
-) *connection {
+) {
 	newConnection := &connection{
 		id:            id,
 		name:          name,
@@ -48,31 +43,6 @@ func createConnection(
 	d.register <- newConnection
 	go newConnection.read()
 	go newConnection.write()
-
-	return newConnection
-}
-
-// UpgradeHandler http request to websocket protocol
-func (d *Dispatcher) UpgradeHandler(
-	config *config.Config,
-	dispatcher *Dispatcher,
-	w http.ResponseWriter,
-	r *http.Request,
-) {
-	conn, err := upgrader.Upgrade(w, r, nil)
-
-	if err != nil {
-		return
-	}
-
-	createConnection(
-		r.Header.Get("Sec-Websocket-Key"),
-		r.Header.Get("upsub-app-id"),
-		r.Header.Get("upsub-connection-name"),
-		conn,
-		config,
-		dispatcher,
-	)
 }
 
 func (c *connection) subscribe(channel string) {

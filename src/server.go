@@ -4,15 +4,16 @@ import (
 	"net/http"
 
 	"github.com/upsub/dispatcher/src/config"
+	"github.com/upsub/dispatcher/src/controller"
 	"github.com/upsub/dispatcher/src/dispatcher"
 )
 
-// Listen starts the dispatcher
+// Listen starts the http server and creates a new dispatcher
 func Listen() {
 	config := config.Create()
 	dispatcher := dispatcher.Create()
 	go dispatcher.Serve()
 
-	http.HandleFunc("/", authenticate(config, dispatcher, dispatcher.UpgradeHandler))
+	http.HandleFunc("/", authenticate(config, dispatcher, controller.UpgradeHandler))
 	http.ListenAndServe(":"+config.Port, nil)
 }
