@@ -2,6 +2,7 @@ package message
 
 import (
 	"encoding/json"
+	"log"
 )
 
 // Message is the message structure for communication between server and clients
@@ -16,6 +17,18 @@ func Create(payload string) *Message {
 		Header:  &Header{},
 		Payload: payload,
 	}
+}
+
+func (m *Message) Batch() []*Message {
+	messages := []*Message{}
+	err := json.Unmarshal([]byte(m.Payload), &messages)
+
+	if err != nil {
+		log.Print("[BATCH INVALID] ", err)
+		return messages
+	}
+
+	return messages
 }
 
 // Decode message from byte array to Message struct

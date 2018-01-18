@@ -44,8 +44,9 @@ type handler func(*config.Config, *dispatcher.Dispatcher, http.ResponseWriter, *
 func authenticate(c *config.Config, d *dispatcher.Dispatcher, next handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if query := r.URL.Query(); len(query) > 0 {
-			r.Header.Set("upsub-app-id", query.Get("upsub-app-id"))
-			r.Header.Set("upsub-public", query.Get("upsub-public"))
+			for key := range query {
+				r.Header.Set(key, query.Get(key))
+			}
 		}
 
 		if len(c.Auths) == 0 {

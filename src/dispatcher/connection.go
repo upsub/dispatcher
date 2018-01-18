@@ -45,16 +45,18 @@ func CreateConnection(
 	go newConnection.write()
 }
 
-func (c *connection) subscribe(channel string) {
-	c.subscriptions = append(c.subscriptions, channel)
+func (c *connection) subscribe(channels []string) {
+	for _, channel := range channels {
+		c.subscriptions = append(c.subscriptions, channel)
+	}
 }
 
-func (c *connection) unsubscribe(channel string) {
+func (c *connection) unsubscribe(channels []string) {
 	var tmp []string
 
-	for _, current := range c.subscriptions {
-		if current != channel {
-			tmp = append(tmp, channel)
+	for _, subscription := range c.subscriptions {
+		if !util.Contains(channels, subscription) {
+			tmp = append(tmp, subscription)
 		}
 	}
 
@@ -82,7 +84,7 @@ func (c *connection) write() {
 			writer, err := c.connection.NextWriter(websocket.TextMessage)
 
 			if err != nil {
-				log.Println("[Faild]", "Message cloudn't be written")
+				log.Println("[FAILED]", "Message cloudn't be written")
 				return
 			}
 
@@ -122,7 +124,7 @@ func (c *connection) read() {
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway) {
 				// TODO should only print if max loglevel is set.
-				log.Printf("[Error] %v", err)
+				log.Printf("[ERROR] %v", err)
 			}
 			break
 		}

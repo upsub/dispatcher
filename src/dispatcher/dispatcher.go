@@ -2,6 +2,7 @@ package dispatcher
 
 import (
 	"log"
+	"strings"
 
 	"github.com/upsub/dispatcher/src/message"
 )
@@ -44,12 +45,12 @@ func (d *Dispatcher) Serve() {
 }
 
 func (d *Dispatcher) connect(connection *connection) {
-	log.Println("[Register]", connection.id, connection.name)
+	log.Println("[REGISTER]", connection.id, connection.name)
 	d.connections[connection] = true
 }
 
 func (d *Dispatcher) disconnect(connection *connection) {
-	log.Println("[Unregister]", connection.id, connection.name)
+	log.Println("[UNREGISTER]", connection.id, connection.name)
 	if _, ok := d.connections[connection]; ok {
 		delete(d.connections, connection)
 		close(connection.send)
@@ -61,7 +62,7 @@ func (d *Dispatcher) processMessage(
 	sender *connection,
 ) {
 	if msg.Header == nil {
-		log.Print("[INVALid MESSAGE] ", msg)
+		log.Print("[INVALID MESSAGE] ", msg)
 		return
 	}
 
@@ -70,13 +71,32 @@ func (d *Dispatcher) processMessage(
 	switch msgType {
 	case message.SubscripeMessage:
 		log.Print("[SUBSCRIBE] ", msg.Payload)
-		sender.subscribe(msg.Payload)
+		channels := strings.Split(strings.Replace(msg.Payload, "\"", "", 2), ",")
+		sender.subscribe(channels)
 		break
 	case message.UnsubscribeMessage:
 		log.Print("[UNSUBSCRIBE] ", msg.Payload)
-		sender.unsubscribe(msg.Payload)
+		channels := strings.Split(strings.Replace(msg.Payload, "\"", "", 2), ",")
+		sender.unsubscribe(channels)
+		break
+	case message.PingMessage:
+		log.Print("[PING] ", msg.Payload)
+		msg.Header.Set("upsub-message-type", message.PongMessage)
+		result, err := message.Encode(msg)
+		if err != nil {
+			log.Print("[PONG FAILD] ", err)
+			return
+		}
+		sender.send <- result
+		break
+	case message.BatchMessage:
+		log.Print("[BATCH] ", msg.Payload)
+		for _, msg := range msg.Batch() {
+			d.processMessage(msg, sender)
+		}
 		break
 	case message.TextMessage:
+		log.Print("[RECEIVED] ", msg.Payload)
 		responseMessage := message.Create(msg.Payload)
 		responseMessage.Header = msg.Header
 

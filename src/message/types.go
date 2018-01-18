@@ -4,6 +4,9 @@ const (
 	// TextMessage normal upsub message
 	TextMessage = "text"
 
+	// BatchMessage contains a batch of messages
+	BatchMessage = "batch"
+
 	// SubscripeMessage subscribe to topic
 	SubscripeMessage = "subscribe"
 
