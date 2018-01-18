@@ -5,6 +5,7 @@ import (
 
 	"github.com/upsub/dispatcher/src/config"
 	"github.com/upsub/dispatcher/src/controller"
+	"github.com/upsub/dispatcher/src/controller/v1"
 	"github.com/upsub/dispatcher/src/dispatcher"
 )
 
@@ -15,5 +16,6 @@ func Listen() {
 	go dispatcher.Serve()
 
 	http.HandleFunc("/", authenticate(config, dispatcher, controller.UpgradeHandler))
+	http.HandleFunc("/v1/send", authenticate(config, dispatcher, v1.Send))
 	http.ListenAndServe(":"+config.Port, nil)
 }

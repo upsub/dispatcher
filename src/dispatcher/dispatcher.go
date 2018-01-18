@@ -131,7 +131,7 @@ func (d *Dispatcher) Dispatch(
 			continue
 		}
 
-		log.Print("[SEND] ", responseMessage)
+		log.Print("[SEND] ", msg.Header.Get("upsub-channel"), " ", msg.Payload)
 		connection.send <- responseMessage
 	}
 }
