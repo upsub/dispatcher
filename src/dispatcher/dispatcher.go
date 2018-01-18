@@ -96,7 +96,7 @@ func (d *Dispatcher) processMessage(
 		}
 		break
 	case message.TextMessage:
-		log.Print("[RECEIVED] ", msg.Payload)
+		log.Print("[RECEIVED] ", msg.Header.Get("upsub-channel"), " ", msg.Payload)
 		responseMessage := message.Create(msg.Payload)
 		responseMessage.Header = msg.Header
 
