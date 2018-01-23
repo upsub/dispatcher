@@ -42,7 +42,7 @@ The dispatcher can authenticate connections with an `App ID`, `Secret Key` if it
 If it's a client from a browser environment, the authentication method will be `App ID`, `Public Key`
 and the `origin` of the request.
 
-- `AUTH_APP_ID`: Should be a string which identifies your application connection.
+- `AUTH_APP_ID`: Should be a string which identifies your application.
 - `AUTH_SECRET`: Should be a sha256 key.
 - `AUTH_PUBLIC`: Should be a sha256 key.
 - `AUTH_ORIGINS`: A comma separated string of the allowed origins
