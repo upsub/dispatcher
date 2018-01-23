@@ -9,7 +9,7 @@ the WebSocket protocol.
 Pull and run the latest version of the Dispatcher from docker hub with the
 command below.
 ```sh
-docker run -d upsub/dispatcher
+docker run -d -p 4400:4400 upsub/dispatcher
 ```
 > The command starts a dispatcher instance which listens on `localhost:4400`.
 
