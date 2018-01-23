@@ -15,7 +15,13 @@ func Listen() {
 	dispatcher := dispatcher.Create()
 	go dispatcher.Serve()
 
+	server := &http.Server{
+		ReadTimeout:  config.ConnectionTimeout,
+		WriteTimeout: config.ConnectionTimeout,
+		Addr:         ":" + config.Port,
+	}
+
 	http.HandleFunc("/", authenticate(config, dispatcher, controller.UpgradeHandler))
 	http.HandleFunc("/v1/send", authenticate(config, dispatcher, v1.Send))
-	http.ListenAndServe(":"+config.Port, nil)
+	server.ListenAndServe()
 }

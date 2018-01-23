@@ -112,9 +112,9 @@ func (c *connection) read() {
 		c.connection.SetReadLimit(c.config.MaxMessageSize)
 	}
 
-	c.connection.SetReadDeadline(time.Now().Add(c.config.Timeout))
+	c.connection.SetReadDeadline(time.Now().Add(c.config.ReadTimeout))
 	c.connection.SetPongHandler(func(string) error {
-		c.connection.SetReadDeadline(time.Now().Add(c.config.Timeout))
+		c.connection.SetReadDeadline(time.Now().Add(c.config.ReadTimeout))
 		return nil
 	})
 
