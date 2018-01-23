@@ -11,6 +11,7 @@ command below.
 ```sh
 docker run -d upsub/dispatcher
 ```
+> The command starts a dispatcher instance which listens on `localhost:4400`.
 
 #### Docker Compose
 The best way to get the Dispatcher integrated in your dev environment is to use
@@ -23,14 +24,14 @@ services:
   upsub/dispatcher:
     image: upsub/dispatcher
     ports:
-      - '5000:5000'
+      - '4400:4400'
 ```
 
 ## Configuration
 The Dispatcher is configurable through environment variables, all available
 configuration options will be listed below.
 
-- `PORT (default: 5000)`: The port the dispatcher is listing for messages.
+- `PORT (default: 4400)`: The port the dispatcher is listing for messages.
 - `MAX_MESSAGE_SIZE (default: no limit)`: The maximum size of a message in bytes.
 - `CONNECTION_TIMEOUT (default: 10s)`: The dispatcher will reject a client if it exceeds the connection timeout.
 - `READ_TIMEOUT (default: 10s)`: The dispatcher will terminate message if it wasn't received within the timeout.

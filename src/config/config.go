@@ -22,7 +22,7 @@ type Config struct {
 // Create configuration
 func Create() *Config {
 	var (
-		port              = "5000"
+		port              = "4400"
 		maxMessageSize    int64
 		connectionTimeout = 10 * time.Second
 		readTimeout       = 10 * time.Second
