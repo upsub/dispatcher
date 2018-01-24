@@ -2,6 +2,7 @@ package server
 
 import (
 	"net/http"
+	"runtime"
 
 	"github.com/upsub/dispatcher/src/config"
 	"github.com/upsub/dispatcher/src/controller"
@@ -12,7 +13,7 @@ import (
 // Listen starts the http server and creates a new dispatcher
 func Listen() {
 	config := config.Create()
-	dispatcher := dispatcher.Create()
+	dispatcher := dispatcher.Create(config)
 	go dispatcher.Serve()
 
 	server := &http.Server{
@@ -24,4 +25,5 @@ func Listen() {
 	http.HandleFunc("/", authenticate(config, dispatcher, controller.UpgradeHandler))
 	http.HandleFunc("/v1/send", authenticate(config, dispatcher, v1.Send))
 	server.ListenAndServe()
+	runtime.Goexit()
 }

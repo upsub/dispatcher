@@ -35,5 +35,5 @@ func Send(
 		return
 	}
 
-	d.Dispatch(message, nil)
+	d.ProcessMessage(message, nil)
 }

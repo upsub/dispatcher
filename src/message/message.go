@@ -7,15 +7,17 @@ import (
 
 // Message is the message structure for communication between server and clients
 type Message struct {
-	Header  *Header `json:"headers"`
-	Payload string  `json:"payload"`
+	Header     *Header `json:"headers"`
+	Payload    string  `json:"payload"`
+	FromBroker bool    `json:"-"`
 }
 
 // Create a new message with cunstom header and events
 func Create(payload string) *Message {
 	return &Message{
-		Header:  &Header{},
-		Payload: payload,
+		&Header{},
+		payload,
+		false,
 	}
 }
 
