@@ -208,6 +208,17 @@ func wildcardIsMatchingChannel(wildcard string, channel string) bool {
 		return false
 	}
 
+	if strings.Contains(wildcard, ":") || strings.Contains(channel, ":") {
+		wildcardActions := strings.Split(wildcard, ":")
+		channelActions := strings.Split(channel, ":")
+
+		if len(wildcardActions) > 1 && len(channelActions) > 1 {
+			return wildcardActions[1] == channelActions[1]
+		}
+
+		return false
+	}
+
 	return true
 }
 
