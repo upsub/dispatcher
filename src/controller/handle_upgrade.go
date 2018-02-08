@@ -27,6 +27,8 @@ func UpgradeHandler(
 		return
 	}
 
+	_, wildcard := r.Header["Origin"]
+
 	dispatcher.CreateConnection(
 		r.Header.Get("Sec-Websocket-Key"),
 		r.Header.Get("upsub-app-id"),
@@ -34,5 +36,8 @@ func UpgradeHandler(
 		conn,
 		config,
 		d,
+		map[string]bool{
+			"wildcard": !wildcard,
+		},
 	)
 }
