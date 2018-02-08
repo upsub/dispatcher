@@ -2,10 +2,12 @@ package dispatcher
 
 import (
 	"log"
+	"strings"
 	"time"
 
 	"github.com/gorilla/websocket"
 	"github.com/upsub/dispatcher/src/config"
+	"github.com/upsub/dispatcher/src/message"
 	"github.com/upsub/dispatcher/src/util"
 )
 
@@ -61,10 +63,6 @@ func (c *connection) unsubscribe(channels []string) {
 	}
 
 	c.subscriptions = tmp
-}
-
-func (c *connection) hasSubscription(channel string) bool {
-	return util.Contains(c.subscriptions, channel)
 }
 
 func (c *connection) write() {
@@ -133,4 +131,105 @@ func (c *connection) read() {
 			return message, c
 		})
 	}
+}
+
+func (c *connection) getWildcardSubscriptions() []string {
+	wildcards := []string{}
+
+	for _, channel := range c.subscriptions {
+		if strings.Contains(channel, "*") || strings.Contains(channel, ">") {
+			wildcards = append(wildcards, channel)
+		}
+	}
+
+	return wildcards
+}
+
+func (c *connection) shouldReceive(msg *message.Message) bool {
+	channel := msg.Header.Get("upsub-channel")
+
+	if wildcards := c.getWildcardSubscriptions(); len(wildcards) > 0 {
+		channel = compareAgainstWildcardSubscriptions(wildcards, channel)
+		msg.Header.Set("upsub-channel", channel)
+	}
+
+	for _, channel := range strings.Split(channel, ",") {
+		if util.Contains(c.subscriptions, channel) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func compareAgainstWildcardSubscriptions(
+	wildcards []string,
+	channel string,
+) string {
+	newChannel := channel
+	for _, wildcard := range wildcards {
+		if wildcardIsMatchingChannel(wildcard, channel) {
+			newChannel += "," + wildcard
+		}
+	}
+
+	return newChannel
+}
+
+func wildcardIsMatchingChannel(wildcard string, channel string) bool {
+	wildcardParts := strings.Split(strings.Split(wildcard, ":")[0], "/")
+	channelParts := strings.Split(strings.Split(channel, ":")[0], "/")
+
+	if len(wildcardParts) > len(channelParts) {
+		return false
+	}
+
+	for i, channelPart := range channelParts {
+		if i > len(wildcardParts)-1 {
+			// index out of bounce, not matching wildcard
+			return false
+		}
+
+		if wildcardParts[i] == channelPart {
+			// check if parts matches
+			continue
+		}
+
+		if wildcardParts[i] == "*" {
+			// check for wildcard *
+			continue
+		}
+
+		if wildcardParts[i] == ">" {
+			wildcardParts = createWildcardParts(wildcardParts, channelParts, i)
+			continue
+		}
+
+		return false
+	}
+
+	return true
+}
+
+func createWildcardParts(wildcardParts []string, channelParts []string, i int) []string {
+	reminders := []string{}
+	newWildcardParts := []string{}
+
+	for index, part := range wildcardParts {
+		if index <= i {
+			continue
+		}
+
+		reminders = append(reminders, part)
+	}
+
+	for index, part := range channelParts {
+		if index > len(channelParts)-len(reminders)-1 {
+			continue
+		}
+
+		newWildcardParts = append(newWildcardParts, part)
+	}
+
+	return append(newWildcardParts, reminders...)
 }

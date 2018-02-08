@@ -120,7 +120,7 @@ func (d *Dispatcher) Dispatch(
 			continue
 		}
 
-		if ok := connection.hasSubscription(msg.Header.Get("upsub-channel")); !ok {
+		if !connection.shouldReceive(msg) {
 			continue
 		}
 
