@@ -15,6 +15,7 @@ type connection struct {
 	id            string
 	name          string
 	appID         string
+	support       map[string]bool
 	subscriptions []string
 	send          chan []byte
 	connection    *websocket.Conn
@@ -30,11 +31,13 @@ func CreateConnection(
 	wsConnection *websocket.Conn,
 	c *config.Config,
 	d *Dispatcher,
+	support map[string]bool,
 ) {
 	newConnection := &connection{
 		id:            id,
 		name:          name,
 		appID:         appID,
+		support:       support,
 		subscriptions: []string{},
 		send:          make(chan []byte, 256),
 		connection:    wsConnection,
@@ -147,6 +150,10 @@ func (c *connection) getWildcardSubscriptions() []string {
 
 func (c *connection) shouldReceive(msg *message.Message) bool {
 	channel := msg.Header.Get("upsub-channel")
+
+	if !c.support["wildcard"] {
+		return false
+	}
 
 	if wildcards := c.getWildcardSubscriptions(); len(wildcards) > 0 {
 		channel = compareAgainstWildcardSubscriptions(wildcards, channel)
