@@ -60,13 +60,14 @@ func authenticate(c *config.Config, d *dispatcher.Dispatcher, next handler) http
 			return
 		}
 
-		if ok := validateSecretKey(c, r.Header.Get("upsub-secret")); !ok && r.Header.Get("Origin") == "" {
+		_, origin := r.Header["Origin"]
+		if !validateSecretKey(c, r.Header.Get("upsub-secret")) && !origin {
 			log.Print("Invalid Secret key")
 			http.Error(w, "Invalid Secret key", 401)
 			return
 		}
 
-		if ok := validatePublicKey(c, r.Header.Get("upsub-public"), r.Header.Get("Origin")); !ok {
+		if origin && !validatePublicKey(c, r.Header.Get("upsub-public"), r.Header.Get("origin")) {
 			log.Print("Invalid public key or origin")
 			http.Error(w, "Invalid public key or origin", 401)
 			return
