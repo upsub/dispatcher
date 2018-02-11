@@ -180,7 +180,7 @@ func (c *connection) shouldReceive(msg *message.Message) bool {
 	channel := msg.Header.Get("upsub-channel")
 
 	if !c.support["wildcard"] {
-		return false
+		return util.Contains(c.subscriptions, channel)
 	}
 
 	if wildcards := c.getWildcardSubscriptions(); len(wildcards) > 0 {
