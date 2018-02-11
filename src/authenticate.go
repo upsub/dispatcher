@@ -42,9 +42,16 @@ func validatePublicKey(config *config.Config, public string, origin string) bool
 type handler func(*config.Config, *dispatcher.Dispatcher, http.ResponseWriter, *http.Request)
 
 func authenticate(c *config.Config, d *dispatcher.Dispatcher, next handler) http.HandlerFunc {
+	allowedQueryParams := []string{
+		"upsub-app-id",
+		"upsub-secret",
+		"upsub-public",
+		"upsub-connection-name",
+	}
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		if query := r.URL.Query(); len(query) > 0 {
-			for key := range query {
+			for _, key := range allowedQueryParams {
 				r.Header.Set(key, query.Get(key))
 			}
 		}
