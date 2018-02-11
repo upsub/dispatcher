@@ -4,18 +4,23 @@ import (
 	"log"
 	"strings"
 
+	"github.com/upsub/dispatcher/src/config"
 	"github.com/upsub/dispatcher/src/message"
 )
 
 type Dispatcher struct {
+	broker      *broker
+	config      *config.Config
 	connections map[*connection]bool
 	broadcast   chan func() ([]byte, *connection)
 	register    chan *connection
 	unregister  chan *connection
 }
 
-func Create() *Dispatcher {
+func Create(config *config.Config) *Dispatcher {
 	return &Dispatcher{
+		broker:      createBroker(config),
+		config:      config,
 		connections: make(map[*connection]bool),
 		broadcast:   make(chan func() ([]byte, *connection)),
 		register:    make(chan *connection),
@@ -24,6 +29,10 @@ func Create() *Dispatcher {
 }
 
 func (d *Dispatcher) Serve() {
+	d.broker.on("upsub.dispatcher.message", func(msg *message.Message) {
+		d.ProcessMessage(msg, nil)
+	})
+
 	for {
 		select {
 		case connection := <-d.register:
@@ -39,7 +48,7 @@ func (d *Dispatcher) Serve() {
 				continue
 			}
 
-			d.processMessage(dmsg, connection)
+			d.ProcessMessage(dmsg, connection)
 		}
 	}
 }
@@ -57,7 +66,7 @@ func (d *Dispatcher) disconnect(connection *connection) {
 	}
 }
 
-func (d *Dispatcher) processMessage(
+func (d *Dispatcher) ProcessMessage(
 	msg *message.Message,
 	sender *connection,
 ) {
@@ -92,12 +101,13 @@ func (d *Dispatcher) processMessage(
 	case message.BatchMessage:
 		log.Print("[BATCH] ", msg.Payload)
 		for _, msg := range msg.Batch() {
-			d.processMessage(msg, sender)
+			d.ProcessMessage(msg, sender)
 		}
 		break
 	case message.TextMessage:
 		log.Print("[RECEIVED] ", msg.Header.Get("upsub-channel"), " ", msg.Payload)
 		responseMessage := message.Create(msg.Payload)
+		responseMessage.FromBroker = msg.FromBroker
 		responseMessage.Header = msg.Header
 
 		d.Dispatch(
@@ -111,6 +121,10 @@ func (d *Dispatcher) Dispatch(
 	msg *message.Message,
 	sender *connection,
 ) {
+	if !msg.FromBroker {
+		d.broker.send("upsub.dispatcher.message", msg)
+	}
+
 	for connection := range d.connections {
 		if sender != nil && sender == connection {
 			continue

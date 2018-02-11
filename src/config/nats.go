@@ -11,15 +11,22 @@ type NatsConfig struct {
 func createNatsConfig() *NatsConfig {
 	var (
 		host = "localhost"
-		port = "6379"
+		port = "4222"
+		set  = false
 	)
 
 	if value, ok := os.LookupEnv("NATS_HOST"); ok {
+		set = true
 		host = value
 	}
 
 	if value, ok := os.LookupEnv("NATS_PORT"); ok {
+		set = true
 		port = value
+	}
+
+	if !set {
+		return nil
 	}
 
 	return &NatsConfig{host, port}

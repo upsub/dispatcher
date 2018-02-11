@@ -6,7 +6,7 @@ services:
     volumes:
       - .:/go/src/github.com/upsub/dispatcher
     ports:
-      - '5000:5000'
+      - '4400:4400'
     environment:
       - NATS_HOST=nats
       - NATS_PORT=4222
@@ -15,3 +15,5 @@ services:
 
   nats:
     image: "nats:latest"
+    ports:
+      - '4222:4222'
