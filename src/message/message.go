@@ -3,8 +3,6 @@ package message
 import (
 	"encoding/json"
 	"log"
-
-	"github.com/upsub/client-go/src/message"
 )
 
 // Message is the message structure for communication between server and clients
@@ -26,7 +24,7 @@ func Create(payload string) *Message {
 // Text, create a new text message
 func Text(channel string, payload string) *Message {
 	header := &Header{
-		"upsub-message-type": message.TextMessage,
+		"upsub-message-type": TextMessage,
 		"upsub-channel":      channel,
 	}
 
