@@ -146,12 +146,6 @@ func (d *Dispatcher) Dispatch(
 		}
 
 		log.Print("[SEND] ", msg.Header.Get("upsub-channel"), " ", msg.Payload)
-
-		// if _, ok := (<-connection.send); !ok {
-		// 	// channel is closed
-		// 	continue
-		// }
-
 		connection.send <- responseMessage
 	}
 }
