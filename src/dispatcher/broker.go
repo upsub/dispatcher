@@ -17,6 +17,10 @@ type broker struct {
 }
 
 func createBroker(config *config.Config) *broker {
+	if config.Nats == nil {
+		return &broker{nil, config, make(map[string][]listener)}
+	}
+
 	connection, err := nats.Connect("nats://" + config.Nats.Host + ":" + config.Nats.Port)
 
 	if err != nil {
