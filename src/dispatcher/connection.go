@@ -48,6 +48,7 @@ func CreateConnection(
 	d.register <- newConnection
 	go newConnection.read()
 	go newConnection.write()
+	newConnection.onConnect()
 }
 
 func (c *connection) subscribe(channels []string) {
@@ -68,11 +69,38 @@ func (c *connection) unsubscribe(channels []string) {
 	c.subscriptions = tmp
 }
 
+func (c *connection) onConnect() {
+	if c.name == "" {
+		return
+	}
+
+	c.dispatcher.Dispatch(
+		message.Text("upsub/presence/"+c.name+"/connect", ""),
+		c,
+	)
+}
+
+func (c *connection) onDisconnect() {
+	if c.name == "" {
+		return
+	}
+
+	c.dispatcher.Dispatch(
+		message.Text("upsub/presence/"+c.name+"/disconnect", ""),
+		c,
+	)
+}
+
+func (c *connection) close() {
+	c.dispatcher.unregister <- c
+	c.connection.Close()
+}
+
 func (c *connection) write() {
 	ticker := time.NewTicker(c.config.PingInterval)
 	defer func() {
 		ticker.Stop()
-		c.connection.Close()
+		c.close()
 	}()
 	for {
 		select {
@@ -105,8 +133,8 @@ func (c *connection) write() {
 
 func (c *connection) read() {
 	defer func() {
-		c.dispatcher.unregister <- c
-		c.connection.Close()
+		defer c.onDisconnect()
+		c.close()
 	}()
 
 	if c.config.MaxMessageSize > 0 {
