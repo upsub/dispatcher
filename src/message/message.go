@@ -12,7 +12,7 @@ type Message struct {
 	FromBroker bool    `json:"-"`
 }
 
-// Create a new message with cunstom header and events
+// Create a new message
 func Create(payload string) *Message {
 	return &Message{
 		&Header{},
