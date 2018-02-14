@@ -1,4 +1,5 @@
 # Dispatcher
+[![Build Status](https://travis-ci.org/upsub/dispatcher.svg?branch=master)](https://travis-ci.org/upsub/dispatcher)
 
 > A high performance Pub/Sub messaging server for the Web and Cloud.
 

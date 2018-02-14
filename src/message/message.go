@@ -5,7 +5,7 @@ import (
 	"log"
 )
 
-// Message is the message structure for communication between server and clients
+// Message structure
 type Message struct {
 	Header     *Header `json:"headers"`
 	Payload    string  `json:"payload"`
@@ -21,17 +21,53 @@ func Create(payload string) *Message {
 	}
 }
 
-// Text, create a new text message
+// Text return a new text message
 func Text(channel string, payload string) *Message {
 	header := &Header{
-		"upsub-message-type": TextMessage,
+		"upsub-message-type": TEXT,
 		"upsub-channel":      channel,
 	}
 
 	return &Message{header, payload, false}
 }
 
-func (m *Message) Batch() []*Message {
+// Ping return a new ping message
+func Ping() *Message {
+	header := &Header{
+		"upsub-message-type": PING,
+	}
+
+	return &Message{header, "", false}
+}
+
+// Pong returns a new pong message
+func Pong() *Message {
+	header := &Header{
+		"upsub-message-type": PONG,
+	}
+
+	return &Message{header, "", false}
+}
+
+// Decode from byte array to Message
+func Decode(message []byte) (*Message, error) {
+	var decodedMessage *Message
+	err := json.Unmarshal(message, &decodedMessage)
+	return decodedMessage, err
+}
+
+// Encode Message to a byte array
+func Encode(message *Message) ([]byte, error) {
+	return json.Marshal(message)
+}
+
+// Encode the message instance and return it in an array of bytes
+func (m *Message) Encode() ([]byte, error) {
+	return Encode(m)
+}
+
+// ParseBatch message batch and return an array of message objects
+func (m *Message) ParseBatch() []*Message {
 	messages := []*Message{}
 	err := json.Unmarshal([]byte(m.Payload), &messages)
 
@@ -41,16 +77,4 @@ func (m *Message) Batch() []*Message {
 	}
 
 	return messages
-}
-
-// Decode message from byte array to Message struct
-func Decode(message []byte) (*Message, error) {
-	var decodedMessage *Message
-	err := json.Unmarshal(message, &decodedMessage)
-	return decodedMessage, err
-}
-
-// Encode Message struct to a byte array and return an error if any was encounterd
-func Encode(message *Message) ([]byte, error) {
-	return json.Marshal(message)
 }

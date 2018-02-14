@@ -78,40 +78,31 @@ func (d *Dispatcher) ProcessMessage(
 	msgType := msg.Header.Get("upsub-message-type")
 
 	switch msgType {
-	case message.SubscripeMessage:
+	case message.SUBSCRIBE:
 		log.Print("[SUBSCRIBE] ", msg.Payload)
 		channels := strings.Split(strings.Replace(msg.Payload, "\"", "", 2), ",")
 		sender.subscribe(channels)
 		break
-	case message.UnsubscribeMessage:
+	case message.UNSUBSCRIBE:
 		log.Print("[UNSUBSCRIBE] ", msg.Payload)
 		channels := strings.Split(strings.Replace(msg.Payload, "\"", "", 2), ",")
 		sender.unsubscribe(channels)
 		break
-	case message.PingMessage:
+	case message.PING:
 		log.Print("[PING] ", msg.Payload)
-		msg.Header.Set("upsub-message-type", message.PongMessage)
-		result, err := message.Encode(msg)
-		if err != nil {
-			log.Print("[PONG FAILD] ", err)
-			return
-		}
-		sender.send <- result
+		sender.send <- message.Pong()
 		break
-	case message.BatchMessage:
+	case message.BATCH:
 		log.Print("[BATCH] ", msg.Payload)
-		for _, msg := range msg.Batch() {
+		for _, msg := range msg.ParseBatch() {
 			d.ProcessMessage(msg, sender)
 		}
 		break
-	case message.TextMessage:
+	case message.TEXT:
 		log.Print("[RECEIVED] ", msg.Header.Get("upsub-channel"), " ", msg.Payload)
-		responseMessage := message.Create(msg.Payload)
-		responseMessage.FromBroker = msg.FromBroker
-		responseMessage.Header = msg.Header
 
 		d.Dispatch(
-			responseMessage,
+			msg,
 			sender,
 		)
 	}
@@ -138,14 +129,7 @@ func (d *Dispatcher) Dispatch(
 			continue
 		}
 
-		responseMessage, err := message.Encode(msg)
-
-		if err != nil {
-			log.Print("[FAILED]", err)
-			continue
-		}
-
 		log.Print("[SEND] ", msg.Header.Get("upsub-channel"), " ", msg.Payload)
-		connection.send <- responseMessage
+		connection.send <- msg
 	}
 }
