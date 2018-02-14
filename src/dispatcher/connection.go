@@ -92,7 +92,6 @@ func (c *connection) onDisconnect() {
 }
 
 func (c *connection) close() {
-	c.dispatcher.unregister <- c
 	c.connection.Close()
 }
 
@@ -134,6 +133,7 @@ func (c *connection) write() {
 func (c *connection) read() {
 	defer func() {
 		defer c.onDisconnect()
+		c.dispatcher.unregister <- c
 		c.close()
 	}()
 
@@ -180,7 +180,7 @@ func (c *connection) shouldReceive(msg *message.Message) bool {
 	channel := msg.Header.Get("upsub-channel")
 
 	if !c.support["wildcard"] {
-		return false
+		return util.Contains(c.subscriptions, channel)
 	}
 
 	if wildcards := c.getWildcardSubscriptions(); len(wildcards) > 0 {
