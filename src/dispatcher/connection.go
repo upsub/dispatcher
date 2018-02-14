@@ -17,7 +17,7 @@ type connection struct {
 	appID         string
 	support       map[string]bool
 	subscriptions []string
-	send          chan []byte
+	send          chan *message.Message
 	connection    *websocket.Conn
 	config        *config.Config
 	dispatcher    *Dispatcher
@@ -39,7 +39,7 @@ func CreateConnection(
 		appID:         appID,
 		support:       support,
 		subscriptions: []string{},
-		send:          make(chan []byte, 256),
+		send:          make(chan *message.Message),
 		connection:    wsConnection,
 		config:        c,
 		dispatcher:    d,
@@ -103,7 +103,7 @@ func (c *connection) write() {
 	}()
 	for {
 		select {
-		case message, ok := <-c.send:
+		case msg, ok := <-c.send:
 			if !ok {
 				c.connection.WriteMessage(websocket.CloseMessage, []byte{})
 				return
@@ -116,7 +116,14 @@ func (c *connection) write() {
 				return
 			}
 
-			writer.Write(message)
+			encoded, err := msg.Encode()
+
+			if err != nil {
+				log.Print("[FAILED]", err)
+				continue
+			}
+
+			writer.Write(encoded)
 
 			if err := writer.Close(); err != nil {
 				return

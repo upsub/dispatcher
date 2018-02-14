@@ -1,21 +1,21 @@
 package message
 
 const (
-	// TextMessage normal upsub message
-	TextMessage = "text"
+	// TEXT message type
+	TEXT = "text"
 
-	// BatchMessage contains a batch of messages
-	BatchMessage = "batch"
+	// BATCH message type
+	BATCH = "batch"
 
-	// SubscripeMessage subscribe to topic
-	SubscripeMessage = "subscribe"
+	// SUBSCRIBE message type
+	SUBSCRIBE = "subscribe"
 
-	// UnsubscribeMessage remove topic subscription
-	UnsubscribeMessage = "unsubscribe"
+	// UNSUBSCRIBE message type
+	UNSUBSCRIBE = "unsubscribe"
 
-	// PingMessage ping the upsub service, should return a pong message
-	PingMessage = "ping"
+	// PING message type
+	PING = "ping"
 
-	// PongMessage pong message is return when a ping message is received
-	PongMessage = "pong"
+	// PONG message type
+	PONG = "pong"
 )
