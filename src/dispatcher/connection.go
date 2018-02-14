@@ -92,7 +92,6 @@ func (c *connection) onDisconnect() {
 }
 
 func (c *connection) close() {
-	c.dispatcher.unregister <- c
 	c.connection.Close()
 }
 
@@ -134,6 +133,7 @@ func (c *connection) write() {
 func (c *connection) read() {
 	defer func() {
 		defer c.onDisconnect()
+		c.dispatcher.unregister <- c
 		c.close()
 	}()
 
