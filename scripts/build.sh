@@ -14,13 +14,13 @@ if [[ -n $1 ]]; then
 fi
 
 # Build all from OSARCH list
-env CGO_ENABLED=0 gox -osarch="$OSARCH" -ldflags="-s -w" -output "$OUTDIR/$APPNAME-{{.OS}}-{{.Arch}}/upsub"
+env CGO_ENABLED=0 gox -osarch="$OSARCH" -ldflags="-s -w" -output "$OUTDIR/$APPNAME-{{.OS}}-{{.Arch}}/upsub-dispatcher"
 
 # Be explicit about the ARM builds
 # ARMv6
-env CGO_ENABLED=0 GOARM=6 gox -osarch="linux/arm" -ldflags="-s -w" -output "$OUTDIR/$APPNAME-linux-arm6/upsub"
+env CGO_ENABLED=0 GOARM=6 gox -osarch="linux/arm" -ldflags="-s -w" -output "$OUTDIR/$APPNAME-linux-arm6/upsub-dispatcher"
 # ARMv7
-env CGO_ENABLED=0 GOARM=7 gox -osarch="linux/arm" -ldflags="-s -w" -output "$OUTDIR/$APPNAME-linux-arm7/upsub"
+env CGO_ENABLED=0 GOARM=7 gox -osarch="linux/arm" -ldflags="-s -w" -output "$OUTDIR/$APPNAME-linux-arm7/upsub-dispatcher"
 
 # Create the zip files
 for dir in $DIRS; do \
