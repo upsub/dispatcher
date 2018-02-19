@@ -1,8 +1,9 @@
 #!/bin/bash
 
 go get github.com/mitchellh/gox
+go get github.com/tcnksm/ghr
 
-export APPNAME="upsub"
+export APPNAME="upsub-dispatcher"
 export OSARCH="linux/386 linux/amd64 linux/arm64 darwin/amd64 windows/386 windows/amd64"
 export DIRS="linux-386 linux-amd64 linux-arm6 linux-arm7 linux-arm64 darwin-amd64 windows-386 windows-amd64"
 export OUTDIR="bin"
