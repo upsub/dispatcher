@@ -4,8 +4,8 @@ import (
 	"log"
 	"strings"
 
-	"github.com/upsub/dispatcher/src/config"
-	"github.com/upsub/dispatcher/src/message"
+	"github.com/upsub/dispatcher/server/config"
+	"github.com/upsub/dispatcher/server/message"
 )
 
 type Dispatcher struct {

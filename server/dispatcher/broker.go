@@ -4,8 +4,8 @@ import (
 	"log"
 
 	nats "github.com/nats-io/go-nats"
-	"github.com/upsub/dispatcher/src/config"
-	"github.com/upsub/dispatcher/src/message"
+	"github.com/upsub/dispatcher/server/config"
+	"github.com/upsub/dispatcher/server/message"
 )
 
 type listener func(msg *message.Message)

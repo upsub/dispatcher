@@ -4,10 +4,10 @@ import (
 	"net/http"
 	"runtime"
 
-	"github.com/upsub/dispatcher/src/config"
-	"github.com/upsub/dispatcher/src/controller"
-	"github.com/upsub/dispatcher/src/controller/v1"
-	"github.com/upsub/dispatcher/src/dispatcher"
+	"github.com/upsub/dispatcher/server/config"
+	"github.com/upsub/dispatcher/server/controller"
+	"github.com/upsub/dispatcher/server/controller/v1"
+	"github.com/upsub/dispatcher/server/dispatcher"
 )
 
 // Listen starts the http server and creates a new dispatcher

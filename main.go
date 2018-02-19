@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/upsub/dispatcher/src"
+	"github.com/upsub/dispatcher/server"
 )
 
 func main() {

@@ -3,4 +3,22 @@ language: go
 go:
   - 1.x
   - 1.7.x
+  - 1.8.5
+  - 1.9.x
   - master
+
+install:
+  - go get github.com/gorilla/websocket
+  - go get github.com/nats-io/go-nats
+  - go get -u honnef.co/go/tools/cmd/megacheck
+  - go get -u github.com/client9/misspell/cmd/misspell
+  - go get -u github.com/tcnksm/ghr
+
+before_script:
+  - go build
+  - $(exit $(go fmt | wc -l))
+  - misspell -error -locale US .
+  - megacheck
+
+after_success:
+  - if [[ "$TRAVIS_GO_VERSION" == 1.9.* ]] && [ "$TRAVIS_TAG" != "" ]; then ./scripts/build.sh $TRAVIS_TAG && ghr --owner upsub --token $GITHUB_TOKEN --replace $TRAVIS_TAG bin/; fi

@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/upsub/dispatcher/src/config"
-	"github.com/upsub/dispatcher/src/message"
-	"github.com/upsub/dispatcher/src/util"
+	"github.com/upsub/dispatcher/server/config"
+	"github.com/upsub/dispatcher/server/message"
+	"github.com/upsub/dispatcher/server/util"
 )
 
 type connection struct {
