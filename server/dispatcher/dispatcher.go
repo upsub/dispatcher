@@ -129,6 +129,10 @@ func (d *Dispatcher) Dispatch(
 			continue
 		}
 
+		if connection.appID != "" {
+			msg.Header.Set("upsub-app-id", connection.appID)
+		}
+
 		log.Print("[SEND] ", msg.Header.Get("upsub-channel"), " ", msg.Payload)
 		connection.send <- msg
 	}
