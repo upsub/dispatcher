@@ -4,9 +4,9 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/upsub/dispatcher/src/config"
-	"github.com/upsub/dispatcher/src/dispatcher"
-	"github.com/upsub/dispatcher/src/message"
+	"github.com/upsub/dispatcher/server/config"
+	"github.com/upsub/dispatcher/server/dispatcher"
+	"github.com/upsub/dispatcher/server/message"
 )
 
 // Send is dispatching events to upsub clients

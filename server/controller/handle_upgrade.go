@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"github.com/gorilla/websocket"
-	"github.com/upsub/dispatcher/src/config"
-	"github.com/upsub/dispatcher/src/dispatcher"
+	"github.com/upsub/dispatcher/server/config"
+	"github.com/upsub/dispatcher/server/dispatcher"
 )
 
 var upgrader = websocket.Upgrader{
