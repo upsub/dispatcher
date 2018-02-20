@@ -9,39 +9,9 @@ import (
 	"github.com/upsub/dispatcher/server/util"
 )
 
-func validateAppID(config *config.Config, appID string) bool {
-	for id := range config.Auths {
-		if id == appID {
-			return true
-		}
-	}
-
-	return false
-}
-
-func validateSecretKey(config *config.Config, secret string) bool {
-	for _, auth := range config.Auths {
-		if auth.Secret == secret {
-			return true
-		}
-	}
-
-	return false
-}
-
-func validatePublicKey(config *config.Config, public string, origin string) bool {
-	for _, auth := range config.Auths {
-		if auth.Public == public && util.Contains(auth.Origins, origin) {
-			return true
-		}
-	}
-
-	return false
-}
-
 type handler func(*config.Config, *dispatcher.Dispatcher, http.ResponseWriter, *http.Request)
 
-func authenticate(c *config.Config, d *dispatcher.Dispatcher, next handler) http.HandlerFunc {
+func parseQueryParams(r *http.Request) {
 	allowedQueryParams := []string{
 		"upsub-app-id",
 		"upsub-secret",
@@ -49,37 +19,41 @@ func authenticate(c *config.Config, d *dispatcher.Dispatcher, next handler) http
 		"upsub-connection-name",
 	}
 
+	if query := r.URL.Query(); len(query) > 0 {
+		for _, key := range allowedQueryParams {
+			r.Header.Set(key, query.Get(key))
+		}
+	}
+}
+
+func reject(w http.ResponseWriter) {
+	log.Print("[AUTH] Invalid authentication credentials")
+	http.Error(w, "Invalid authentication credentials", 401)
+}
+
+func authenticate(c *config.Config, d *dispatcher.Dispatcher, next handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if query := r.URL.Query(); len(query) > 0 {
-			for _, key := range allowedQueryParams {
-				r.Header.Set(key, query.Get(key))
-			}
+		parseQueryParams(r)
+
+		app := c.Apps.Find(r.Header.Get("upsub-app-id"))
+
+		if app == nil {
+			reject(w)
+			return
 		}
 
-		if len(c.Auths) == 0 {
+		origin := r.Header.Get("Origin")
+
+		if len(origin) == 0 && app.Secret == r.Header.Get("upsub-secret") {
 			next(c, d, w, r)
 			return
 		}
 
-		if ok := validateAppID(c, r.Header.Get("upsub-app-id")); !ok {
-			log.Print("Invalid APP ID")
-			http.Error(w, "Invalid APP ID", 401)
+		if len(origin) > 0 && app.Public == r.Header.Get("upsub-public") && util.Contains(app.Origins, origin) {
+			next(c, d, w, r)
 			return
 		}
 
-		_, origin := r.Header["Origin"]
-		if !validateSecretKey(c, r.Header.Get("upsub-secret")) && !origin {
-			log.Print("Invalid Secret key")
-			http.Error(w, "Invalid Secret key", 401)
-			return
-		}
-
-		if origin && !validatePublicKey(c, r.Header.Get("upsub-public"), r.Header.Get("origin")) {
-			log.Print("Invalid public key or origin")
-			http.Error(w, "Invalid public key or origin", 401)
-			return
-		}
-
-		next(c, d, w, r)
+		reject(w)
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -15,7 +16,7 @@ type Config struct {
 	ReadTimeout       time.Duration
 	WriteTimeout      time.Duration
 	PingInterval      time.Duration
-	Auths             map[string]*AuthConfig
+	Apps              *Apps
 	Nats              *NatsConfig
 }
 
@@ -27,12 +28,14 @@ func Create() *Config {
 		connectionTimeout = 10 * time.Second
 		readTimeout       = 10 * time.Second
 		writeTimeout      = 10 * time.Second
-		pingInterval      = (readTimeout * 9) / 10
-		auths             = map[string]*AuthConfig{}
 	)
 
 	if value, ok := os.LookupEnv("PORT"); ok {
-		port = value
+		if _, err := strconv.ParseInt(value, 10, 64); err != nil {
+			log.Print("Invalid PORT given")
+		} else {
+			port = value
+		}
 	}
 
 	if value, ok := os.LookupEnv("MAX_MESSAGE_SIZE"); ok {
@@ -67,9 +70,16 @@ func Create() *Config {
 		}
 	}
 
-	if auth := createAuthConfig(); auth.AppID != "" {
-		auths[auth.AppID] = auth
-	}
+	apps := createAppMap()
+	apps.Append(
+		CreateApp(
+			os.Getenv("AUTH_APP_ID"),
+			os.Getenv("AUTH_SECRET"),
+			os.Getenv("AUTH_PUBLIC"),
+			strings.Split(os.Getenv("AUTH_ORIGINS"), ","),
+			nil,
+		),
+	)
 
 	return &Config{
 		Port:              port,
@@ -77,8 +87,8 @@ func Create() *Config {
 		ConnectionTimeout: connectionTimeout,
 		ReadTimeout:       readTimeout,
 		WriteTimeout:      writeTimeout,
-		PingInterval:      pingInterval,
-		Auths:             auths,
+		PingInterval:      (readTimeout * 9) / 10,
+		Apps:              apps,
 		Nats:              createNatsConfig(),
 	}
 }

@@ -12,18 +12,18 @@ import (
 
 // Listen starts the http server and creates a new dispatcher
 func Listen() {
-	config := config.Create()
-	dispatcher := dispatcher.Create(config)
+	conf := config.Create()
+	dispatcher := dispatcher.Create(conf)
 	go dispatcher.Serve()
 
 	server := &http.Server{
-		ReadTimeout:  config.ConnectionTimeout,
-		WriteTimeout: config.ConnectionTimeout,
-		Addr:         ":" + config.Port,
+		ReadTimeout:  conf.ConnectionTimeout,
+		WriteTimeout: conf.ConnectionTimeout,
+		Addr:         ":" + conf.Port,
 	}
 
-	http.HandleFunc("/", authenticate(config, dispatcher, controller.UpgradeHandler))
-	http.HandleFunc("/v1/send", authenticate(config, dispatcher, v1.Send))
+	http.HandleFunc("/", authenticate(conf, dispatcher, controller.UpgradeHandler))
+	http.HandleFunc("/v1/send", authenticate(conf, dispatcher, v1.Send))
 	server.ListenAndServe()
 	runtime.Goexit()
 }

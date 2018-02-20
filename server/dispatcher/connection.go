@@ -29,7 +29,7 @@ func CreateConnection(
 	appID string,
 	name string,
 	wsConnection *websocket.Conn,
-	c *config.Config,
+	conn *config.Config,
 	d *Dispatcher,
 	support map[string]bool,
 ) {
@@ -41,7 +41,7 @@ func CreateConnection(
 		subscriptions: []string{},
 		send:          make(chan *message.Message),
 		connection:    wsConnection,
-		config:        c,
+		config:        conn,
 		dispatcher:    d,
 	}
 
@@ -51,65 +51,65 @@ func CreateConnection(
 	newConnection.onConnect()
 }
 
-func (c *connection) subscribe(channels []string) {
+func (conn *connection) subscribe(channels []string) {
 	for _, channel := range channels {
-		c.subscriptions = append(c.subscriptions, channel)
+		conn.subscriptions = append(conn.subscriptions, channel)
 	}
 }
 
-func (c *connection) unsubscribe(channels []string) {
+func (conn *connection) unsubscribe(channels []string) {
 	var tmp []string
 
-	for _, subscription := range c.subscriptions {
+	for _, subscription := range conn.subscriptions {
 		if !util.Contains(channels, subscription) {
 			tmp = append(tmp, subscription)
 		}
 	}
 
-	c.subscriptions = tmp
+	conn.subscriptions = tmp
 }
 
-func (c *connection) onConnect() {
-	if c.name == "" {
+func (conn *connection) onConnect() {
+	if conn.name == "" {
 		return
 	}
 
-	c.dispatcher.Dispatch(
-		message.Text("upsub/presence/"+c.name+"/connect", ""),
-		c,
+	conn.dispatcher.Dispatch(
+		message.Text("upsub/presence/"+conn.name+"/connect", ""),
+		conn,
 	)
 }
 
-func (c *connection) onDisconnect() {
-	if c.name == "" {
+func (conn *connection) onDisconnect() {
+	if conn.name == "" {
 		return
 	}
 
-	c.dispatcher.Dispatch(
-		message.Text("upsub/presence/"+c.name+"/disconnect", ""),
-		c,
+	conn.dispatcher.Dispatch(
+		message.Text("upsub/presence/"+conn.name+"/disconnect", ""),
+		conn,
 	)
 }
 
-func (c *connection) close() {
-	c.connection.Close()
+func (conn *connection) close() {
+	conn.connection.Close()
 }
 
-func (c *connection) write() {
-	ticker := time.NewTicker(c.config.PingInterval)
+func (conn *connection) write() {
+	ticker := time.NewTicker(conn.config.PingInterval)
 	defer func() {
 		ticker.Stop()
-		c.close()
+		conn.close()
 	}()
 	for {
 		select {
-		case msg, ok := <-c.send:
+		case msg, ok := <-conn.send:
 			if !ok {
-				c.connection.WriteMessage(websocket.CloseMessage, []byte{})
+				conn.connection.WriteMessage(websocket.CloseMessage, []byte{})
 				return
 			}
 
-			writer, err := c.connection.NextWriter(websocket.TextMessage)
+			writer, err := conn.connection.NextWriter(websocket.TextMessage)
 
 			if err != nil {
 				log.Println("[FAILED]", "Message cloudn't be written")
@@ -129,33 +129,33 @@ func (c *connection) write() {
 				return
 			}
 		case <-ticker.C:
-			c.connection.SetWriteDeadline(time.Now().Add(c.config.WriteTimeout))
-			if err := c.connection.WriteMessage(websocket.PingMessage, nil); err != nil {
+			conn.connection.SetWriteDeadline(time.Now().Add(conn.config.WriteTimeout))
+			if err := conn.connection.WriteMessage(websocket.PingMessage, nil); err != nil {
 				return
 			}
 		}
 	}
 }
 
-func (c *connection) read() {
+func (conn *connection) read() {
 	defer func() {
-		defer c.onDisconnect()
-		c.dispatcher.unregister <- c
-		c.close()
+		defer conn.onDisconnect()
+		conn.dispatcher.unregister <- conn
+		conn.close()
 	}()
 
-	if c.config.MaxMessageSize > 0 {
-		c.connection.SetReadLimit(c.config.MaxMessageSize)
+	if conn.config.MaxMessageSize > 0 {
+		conn.connection.SetReadLimit(conn.config.MaxMessageSize)
 	}
 
-	c.connection.SetReadDeadline(time.Now().Add(c.config.ReadTimeout))
-	c.connection.SetPongHandler(func(string) error {
-		c.connection.SetReadDeadline(time.Now().Add(c.config.ReadTimeout))
+	conn.connection.SetReadDeadline(time.Now().Add(conn.config.ReadTimeout))
+	conn.connection.SetPongHandler(func(string) error {
+		conn.connection.SetReadDeadline(time.Now().Add(conn.config.ReadTimeout))
 		return nil
 	})
 
 	for {
-		_, message, err := c.connection.ReadMessage()
+		_, message, err := conn.connection.ReadMessage()
 
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway) {
@@ -165,16 +165,40 @@ func (c *connection) read() {
 			break
 		}
 
-		c.dispatcher.broadcast <- (func() ([]byte, *connection) {
-			return message, c
+		conn.dispatcher.broadcast <- (func() ([]byte, *connection) {
+			return message, conn
 		})
 	}
 }
 
-func (c *connection) getWildcardSubscriptions() []string {
+func (conn *connection) isParentToSender(sender *connection) bool {
+	config := conn.config
+	receiverApp := config.Apps.Find(conn.appID)
+	senderApp := config.Apps.Find(sender.appID)
+
+	if senderApp.ChildOf(receiverApp) {
+		return true
+	}
+
+	return false
+}
+
+func (conn *connection) shouldSend(receiver *connection) bool {
+	if conn.appID == receiver.appID {
+		return true
+	}
+
+	if receiver.isParentToSender(conn) {
+		return true
+	}
+
+	return false
+}
+
+func (conn *connection) getWildcardSubscriptions() []string {
 	wildcards := []string{}
 
-	for _, channel := range c.subscriptions {
+	for _, channel := range conn.subscriptions {
 		if strings.Contains(channel, "*") || strings.Contains(channel, ">") {
 			wildcards = append(wildcards, channel)
 		}
@@ -183,20 +207,20 @@ func (c *connection) getWildcardSubscriptions() []string {
 	return wildcards
 }
 
-func (c *connection) shouldReceive(msg *message.Message) bool {
+func (conn *connection) shouldReceive(msg *message.Message) bool {
 	channel := msg.Header.Get("upsub-channel")
 
-	if !c.support["wildcard"] {
-		return util.Contains(c.subscriptions, channel)
+	if !conn.support["wildcard"] {
+		return util.Contains(conn.subscriptions, channel)
 	}
 
-	if wildcards := c.getWildcardSubscriptions(); len(wildcards) > 0 {
+	if wildcards := conn.getWildcardSubscriptions(); len(wildcards) > 0 {
 		channel = compareAgainstWildcardSubscriptions(wildcards, channel)
 		msg.Header.Set("upsub-channel", channel)
 	}
 
 	for _, channel := range strings.Split(channel, ",") {
-		if util.Contains(c.subscriptions, channel) {
+		if util.Contains(conn.subscriptions, channel) {
 			return true
 		}
 	}

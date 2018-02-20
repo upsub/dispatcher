@@ -116,20 +116,24 @@ func (d *Dispatcher) Dispatch(
 		d.broker.send("upsub.dispatcher.message", msg)
 	}
 
-	for connection := range d.connections {
-		if sender != nil && sender == connection {
+	for receiver := range d.connections {
+		if sender != nil && sender == receiver {
 			continue
 		}
 
-		if sender != nil && connection.appID != sender.appID {
+		if sender != nil && !sender.shouldSend(receiver) {
 			continue
 		}
 
-		if !connection.shouldReceive(msg) {
+		if !receiver.shouldReceive(msg) {
 			continue
+		}
+
+		if receiver.appID != "" {
+			msg.Header.Set("upsub-app-id", receiver.appID)
 		}
 
 		log.Print("[SEND] ", msg.Header.Get("upsub-channel"), " ", msg.Payload)
-		connection.send <- msg
+		receiver.send <- msg
 	}
 }
