@@ -33,6 +33,7 @@ func (apps *Apps) Append(app *App) *Apps {
 	return apps
 }
 
+// CreateApp creates a new app config
 func CreateApp(
 	id string,
 	secret string,
@@ -58,8 +59,22 @@ func (apps *Apps) Find(id string) *App {
 	return apps.configs[id]
 }
 
+// Length of the Apps map
 func (apps *Apps) Length() int {
 	return len(apps.configs)
+}
+
+// ChildOf checks if an app is a child of another app
+func (child *App) ChildOf(parent *App) bool {
+	if child.Parent == parent {
+		return true
+	}
+
+	if child.Parent == nil {
+		return false
+	}
+
+	return child.Parent.ChildOf(parent)
 }
 
 func createAppMap() *Apps {

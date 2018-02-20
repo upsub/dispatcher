@@ -1,6 +1,8 @@
 package config
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestCreateApp(t *testing.T) {
 	app := CreateApp("root", "secret", "public", []string{"http://localhost:4400"}, []*App{
@@ -79,4 +81,33 @@ func TestAppsLength(t *testing.T) {
 	if apps.Length() != 2 {
 		t.Error("Apps.Length didn't return length of the map")
 	}
+}
+
+func TestIsChildOf(t *testing.T) {
+	apps := createAppMap()
+	apps.Append(CreateApp("root", "secret", "public", []string{"http://localhost:4400"}, nil))
+	apps.Append(
+		CreateApp("parent", "secret", "public", []string{"http://localhost:4400"}, []*App{
+			CreateApp("child", "child", "child", []string{"http://child"}, []*App{
+				CreateApp("grand-child", "grand-child", "grand-child", []string{"http://grand-child"}, nil),
+			}),
+		}),
+	)
+
+	root := apps.Find("root")
+	parent := apps.Find("parent")
+	grandChild := apps.Find("grand-child")
+
+	if grandChild.ChildOf(root) != false {
+		t.Error("App.ChildOf Shouldn't be child of root")
+	}
+
+	if root.ChildOf(parent) != false {
+		t.Error("App.ChildOf shouldn't have any children")
+	}
+
+	if grandChild.ChildOf(parent) != true {
+		t.Error("App.ChildOf Should be child of parent")
+	}
+
 }
