@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -69,6 +70,17 @@ func Create() *Config {
 		}
 	}
 
+	apps := createAppMap()
+	apps.Append(
+		CreateApp(
+			os.Getenv("AUTH_APP_ID"),
+			os.Getenv("AUTH_SECRET"),
+			os.Getenv("AUTH_PUBLIC"),
+			strings.Split(os.Getenv("AUTH_ORIGINS"), ","),
+			nil,
+		),
+	)
+
 	return &Config{
 		Port:              port,
 		MaxMessageSize:    maxMessageSize,
@@ -76,7 +88,7 @@ func Create() *Config {
 		ReadTimeout:       readTimeout,
 		WriteTimeout:      writeTimeout,
 		PingInterval:      (readTimeout * 9) / 10,
-		Apps:              createAppMap(),
+		Apps:              apps,
 		Nats:              createNatsConfig(),
 	}
 }

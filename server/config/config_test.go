@@ -33,8 +33,8 @@ func TestCreateDefaultConfig(t *testing.T) {
 		t.Error("PingInterval wasn't set to its default value")
 	}
 
-	if config.Apps.Length() != 0 {
-		t.Error("Apps shouldn't include any")
+	if config.Apps.Length() != 1 {
+		t.Error("Apps should only in include the root app")
 	}
 
 	if config.Nats != nil {

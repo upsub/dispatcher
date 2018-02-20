@@ -35,11 +35,6 @@ func authenticate(c *config.Config, d *dispatcher.Dispatcher, next handler) http
 	return func(w http.ResponseWriter, r *http.Request) {
 		parseQueryParams(r)
 
-		if c.Apps.Length() == 0 {
-			next(c, d, w, r)
-			return
-		}
-
 		app := c.Apps.Find(r.Header.Get("upsub-app-id"))
 
 		if app == nil {
