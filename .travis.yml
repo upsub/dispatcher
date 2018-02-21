@@ -8,11 +8,11 @@ go:
   - master
 
 install:
-  - go get github.com/gorilla/websocket
-  - go get github.com/nats-io/go-nats
   - go get -u honnef.co/go/tools/cmd/megacheck
   - go get -u github.com/client9/misspell/cmd/misspell
   - go get -u github.com/tcnksm/ghr
+  - go get -u github.com/golang/dep/cmd/dep
+  - dep ensure
 
 before_script:
   - go build
