@@ -8,6 +8,7 @@ import (
 	"github.com/upsub/dispatcher/server/message"
 )
 
+// Dispatcher type
 type Dispatcher struct {
 	broker      *broker
 	config      *config.Config
@@ -17,6 +18,7 @@ type Dispatcher struct {
 	unregister  chan *connection
 }
 
+// Create returns a new instance of the Dispatcher
 func Create(config *config.Config) *Dispatcher {
 	return &Dispatcher{
 		broker:      createBroker(config),
@@ -28,6 +30,7 @@ func Create(config *config.Config) *Dispatcher {
 	}
 }
 
+// Serve listens for incomming connections and messages
 func (d *Dispatcher) Serve() {
 	d.broker.on("upsub.dispatcher.message", func(msg *message.Message) {
 		d.ProcessMessage(msg, nil)
@@ -66,6 +69,7 @@ func (d *Dispatcher) disconnect(connection *connection) {
 	}
 }
 
+// ProcessMessage is parsing and routing the messages to the correct functions
 func (d *Dispatcher) ProcessMessage(
 	msg *message.Message,
 	sender *connection,
@@ -108,6 +112,7 @@ func (d *Dispatcher) ProcessMessage(
 	}
 }
 
+// Dispatch sends messages to listening clients
 func (d *Dispatcher) Dispatch(
 	msg *message.Message,
 	sender *connection,
@@ -133,7 +138,6 @@ func (d *Dispatcher) Dispatch(
 			msg.Header.Set("upsub-app-id", receiver.appID)
 		}
 
-		log.Print("[SEND] ", msg.Header.Get("upsub-channel"), " ", msg.Payload)
 		receiver.send <- msg
 	}
 }

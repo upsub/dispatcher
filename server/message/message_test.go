@@ -42,6 +42,22 @@ func TestPong(t *testing.T) {
 	}
 }
 
+func TestResponseAction(t *testing.T) {
+	msg := ResponseAction([]string{"channel", "channel-2/event"}, "action")
+
+	if msg.Header.Get("upsub-message-type") != "text" {
+		t.Error("SubscribeResponse upsub-message-type wasn't correct type")
+	}
+
+	if msg.Header.Get("upsub-channel") != "channel:action,channel-2/event:action" {
+		t.Error("SubscribeResponse upsub-channel wasn't set correctly")
+	}
+
+	if msg.Payload != "\"channel:action,channel-2/event:action\"" {
+		t.Error("SubscribeResponse upsub-channel wasn't set correctly")
+	}
+}
+
 func TestDecode(t *testing.T) {
 	msgString := "{\"headers\":{\"upsub-message-type\":\"text\",\"upsub-channel\":\"channel\"},\"payload\":\"\\\"hello world!\\\"\"}"
 

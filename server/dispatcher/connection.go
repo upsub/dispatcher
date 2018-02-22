@@ -61,6 +61,8 @@ func (conn *connection) subscribe(channels []string) {
 	for _, channel := range channels {
 		conn.subscriptions = append(conn.subscriptions, channel)
 	}
+
+	conn.send <- message.ResponseAction(channels, "subscribed")
 }
 
 func (conn *connection) unsubscribe(channels []string) {
@@ -73,6 +75,7 @@ func (conn *connection) unsubscribe(channels []string) {
 	}
 
 	conn.subscriptions = tmp
+	conn.send <- message.ResponseAction(channels, "unsubscribed")
 }
 
 func (conn *connection) onConnect() {
@@ -127,6 +130,10 @@ func (conn *connection) write() {
 			if err != nil {
 				log.Print("[FAILED]", err)
 				continue
+			}
+
+			if msg.Header.Get("upsub-message-type") == "text" {
+				log.Print("[SEND] ", msg.Header.Get("upsub-channel"), " ", msg.Payload)
 			}
 
 			writer.Write(encoded)
