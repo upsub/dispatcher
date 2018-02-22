@@ -105,10 +105,16 @@ func (d *Dispatcher) ProcessMessage(
 	case message.TEXT:
 		log.Print("[RECEIVED] ", msg.Header.Get("upsub-channel"), " ", msg.Payload)
 
-		d.Dispatch(
-			msg,
-			sender,
-		)
+		if !strings.Contains(msg.Header.Get("upsub-channel"), ",") {
+			d.Dispatch(msg, sender)
+			return
+		}
+
+		channels := strings.Split(msg.Header.Get("upsub-channel"), ",")
+
+		for _, channel := range channels {
+			d.Dispatch(message.Text(channel, msg.Payload), sender)
+		}
 	}
 }
 
@@ -134,8 +140,8 @@ func (d *Dispatcher) Dispatch(
 			continue
 		}
 
-		if receiver.appID != "" {
-			msg.Header.Set("upsub-app-id", receiver.appID)
+		if sender.appID != "" {
+			msg.Header.Set("upsub-app-id", sender.appID)
 		}
 
 		receiver.send <- msg
