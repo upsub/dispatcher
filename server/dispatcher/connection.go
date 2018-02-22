@@ -32,7 +32,7 @@ func CreateConnection(
 	conn *config.Config,
 	d *Dispatcher,
 	support map[string]bool,
-) {
+) *connection {
 	newConnection := &connection{
 		id:            id,
 		name:          name,
@@ -45,10 +45,16 @@ func CreateConnection(
 		dispatcher:    d,
 	}
 
+	if newConnection.connection == nil {
+		return newConnection
+	}
+
 	d.register <- newConnection
 	go newConnection.read()
 	go newConnection.write()
 	newConnection.onConnect()
+
+	return newConnection
 }
 
 func (conn *connection) subscribe(channels []string) {
