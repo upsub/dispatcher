@@ -35,21 +35,21 @@ func authenticate(c *config.Config, d *dispatcher.Dispatcher, next handler) http
 	return func(w http.ResponseWriter, r *http.Request) {
 		parseQueryParams(r)
 
-		app := c.Apps.Find(r.Header.Get("upsub-app-id"))
+		auth := c.Auths.Find(r.Header.Get("upsub-app-id"))
 
-		if app == nil {
+		if auth == nil {
 			reject(w)
 			return
 		}
 
 		origin := r.Header.Get("Origin")
 
-		if len(origin) == 0 && app.Secret == r.Header.Get("upsub-secret") {
+		if len(origin) == 0 && auth.Secret == r.Header.Get("upsub-secret") {
 			next(c, d, w, r)
 			return
 		}
 
-		if len(origin) > 0 && app.Public == r.Header.Get("upsub-public") && util.Contains(app.Origins, origin) {
+		if len(origin) > 0 && auth.Public == r.Header.Get("upsub-public") && util.Contains(auth.Origins, origin) {
 			next(c, d, w, r)
 			return
 		}

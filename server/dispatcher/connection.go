@@ -186,8 +186,8 @@ func (conn *connection) read() {
 
 func (conn *connection) isParentToSender(sender *connection) bool {
 	config := conn.config
-	receiverApp := config.Apps.Find(conn.appID)
-	senderApp := config.Apps.Find(sender.appID)
+	receiverApp := config.Auths.Find(conn.appID)
+	senderApp := config.Auths.Find(sender.appID)
 
 	if senderApp.ChildOf(receiverApp) {
 		return true

@@ -16,7 +16,7 @@ type Config struct {
 	ReadTimeout       time.Duration
 	WriteTimeout      time.Duration
 	PingInterval      time.Duration
-	Apps              *Apps
+	Auths             *Auths
 	Nats              *NatsConfig
 }
 
@@ -70,16 +70,20 @@ func Create() *Config {
 		}
 	}
 
-	apps := createAppMap()
-	apps.Append(
-		CreateApp(
-			os.Getenv("AUTH_APP_ID"),
-			os.Getenv("AUTH_SECRET"),
-			os.Getenv("AUTH_PUBLIC"),
-			strings.Split(os.Getenv("AUTH_ORIGINS"), ","),
-			nil,
-		),
+	auths := createAuths()
+	root := CreateAuth(
+		os.Getenv("AUTH_APP_ID"),
+		os.Getenv("AUTH_SECRET"),
+		os.Getenv("AUTH_PUBLIC"),
+		strings.Split(os.Getenv("AUTH_ORIGINS"), ","),
+		nil,
 	)
+
+	auths.Append(root)
+
+	if root.ID != "" || root.Secret != "" {
+		root.SetRules(true, true, true)
+	}
 
 	return &Config{
 		Port:              port,
@@ -88,7 +92,7 @@ func Create() *Config {
 		ReadTimeout:       readTimeout,
 		WriteTimeout:      writeTimeout,
 		PingInterval:      (readTimeout * 9) / 10,
-		Apps:              apps,
+		Auths:             auths,
 		Nats:              createNatsConfig(),
 	}
 }
