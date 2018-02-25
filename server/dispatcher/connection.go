@@ -32,7 +32,7 @@ func CreateConnection(
 	conn *config.Config,
 	d *Dispatcher,
 	support map[string]bool,
-) {
+) *connection {
 	newConnection := &connection{
 		id:            id,
 		name:          name,
@@ -45,16 +45,24 @@ func CreateConnection(
 		dispatcher:    d,
 	}
 
+	if newConnection.connection == nil {
+		return newConnection
+	}
+
 	d.register <- newConnection
 	go newConnection.read()
 	go newConnection.write()
 	newConnection.onConnect()
+
+	return newConnection
 }
 
 func (conn *connection) subscribe(channels []string) {
 	for _, channel := range channels {
 		conn.subscriptions = append(conn.subscriptions, channel)
 	}
+
+	conn.send <- message.ResponseAction(channels, "subscribed")
 }
 
 func (conn *connection) unsubscribe(channels []string) {
@@ -67,6 +75,7 @@ func (conn *connection) unsubscribe(channels []string) {
 	}
 
 	conn.subscriptions = tmp
+	conn.send <- message.ResponseAction(channels, "unsubscribed")
 }
 
 func (conn *connection) onConnect() {
@@ -123,6 +132,10 @@ func (conn *connection) write() {
 				continue
 			}
 
+			if msg.Header.Get("upsub-message-type") == "text" {
+				log.Print("[SEND] ", msg.Header.Get("upsub-channel"), " ", msg.Payload)
+			}
+
 			writer.Write(encoded)
 
 			if err := writer.Close(); err != nil {
@@ -173,8 +186,8 @@ func (conn *connection) read() {
 
 func (conn *connection) isParentToSender(sender *connection) bool {
 	config := conn.config
-	receiverApp := config.Apps.Find(conn.appID)
-	senderApp := config.Apps.Find(sender.appID)
+	receiverApp := config.Auths.Find(conn.appID)
+	senderApp := config.Auths.Find(sender.appID)
 
 	if senderApp.ChildOf(receiverApp) {
 		return true

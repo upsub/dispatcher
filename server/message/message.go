@@ -3,6 +3,7 @@ package message
 import (
 	"encoding/json"
 	"log"
+	"strings"
 )
 
 // Message structure
@@ -47,6 +48,20 @@ func Pong() *Message {
 	}
 
 	return &Message{header, "", false}
+}
+
+// ResponseAction return a new response action
+func ResponseAction(channels []string, action string) *Message {
+	for i, channel := range channels {
+		channels[i] = channel + ":" + action
+	}
+
+	header := &Header{
+		"upsub-message-type": TEXT,
+		"upsub-channel":      strings.Join(channels, ","),
+	}
+
+	return &Message{header, "\"" + strings.Join(channels, ",") + "\"", false}
 }
 
 // Decode from byte array to Message

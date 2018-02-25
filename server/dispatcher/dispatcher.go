@@ -6,8 +6,16 @@ import (
 
 	"github.com/upsub/dispatcher/server/config"
 	"github.com/upsub/dispatcher/server/message"
+	"github.com/upsub/dispatcher/server/util"
 )
 
+var reservedChannels = []string{
+	"upsub/auth/create",
+	"upsub/auth/update",
+	"upsub/auth/delete",
+}
+
+// Dispatcher type
 type Dispatcher struct {
 	broker      *broker
 	config      *config.Config
@@ -17,6 +25,7 @@ type Dispatcher struct {
 	unregister  chan *connection
 }
 
+// Create returns a new instance of the Dispatcher
 func Create(config *config.Config) *Dispatcher {
 	return &Dispatcher{
 		broker:      createBroker(config),
@@ -28,6 +37,7 @@ func Create(config *config.Config) *Dispatcher {
 	}
 }
 
+// Serve listens for incomming connections and messages
 func (d *Dispatcher) Serve() {
 	d.broker.on("upsub.dispatcher.message", func(msg *message.Message) {
 		d.ProcessMessage(msg, nil)
@@ -66,6 +76,41 @@ func (d *Dispatcher) disconnect(connection *connection) {
 	}
 }
 
+func (d *Dispatcher) processInternalMessage(
+	msg *message.Message,
+	sender *connection,
+) {
+	switch msg.Header.Get("upsub-channel") {
+	case "upsub/auth/create":
+		if !d.config.Auths.Find(sender.appID).CanCreate() {
+			log.Print("[AUTH] Not allowed to create")
+			return
+		}
+		d.config.Auths.CreateFromMessage(msg, sender.appID)
+		break
+	case "upsub/auth/update":
+		if !d.config.Auths.Find(sender.appID).CanUpdate() {
+			log.Print("[AUTH] Not allowed to update")
+			return
+		}
+		d.config.Auths.UpdateFromMessage(msg)
+		break
+	case "upsub/auth/delete":
+		if !d.config.Auths.Find(sender.appID).CanDelete() {
+			log.Print("[AUTH] Not allowed to delete")
+			return
+		}
+		d.config.Auths.DeleteFromMessage(msg)
+		for conn := range d.connections {
+			if conn.appID == strings.Replace(msg.Payload, "\"", "", 2) {
+				conn.close()
+			}
+		}
+		break
+	}
+}
+
+// ProcessMessage is parsing and routing the messages to the correct functions
 func (d *Dispatcher) ProcessMessage(
 	msg *message.Message,
 	sender *connection,
@@ -101,19 +146,31 @@ func (d *Dispatcher) ProcessMessage(
 	case message.TEXT:
 		log.Print("[RECEIVED] ", msg.Header.Get("upsub-channel"), " ", msg.Payload)
 
-		d.Dispatch(
-			msg,
-			sender,
-		)
+		if !strings.Contains(msg.Header.Get("upsub-channel"), ",") {
+			d.Dispatch(msg, sender)
+			return
+		}
+
+		channels := strings.Split(msg.Header.Get("upsub-channel"), ",")
+
+		for _, channel := range channels {
+			d.Dispatch(message.Text(channel, msg.Payload), sender)
+		}
 	}
 }
 
+// Dispatch sends messages to listening clients
 func (d *Dispatcher) Dispatch(
 	msg *message.Message,
 	sender *connection,
 ) {
 	if !msg.FromBroker {
 		d.broker.send("upsub.dispatcher.message", msg)
+	}
+
+	if util.Contains(reservedChannels, msg.Header.Get("upsub-channel")) {
+		d.processInternalMessage(msg, sender)
+		return
 	}
 
 	for receiver := range d.connections {
@@ -129,11 +186,10 @@ func (d *Dispatcher) Dispatch(
 			continue
 		}
 
-		if receiver.appID != "" {
-			msg.Header.Set("upsub-app-id", receiver.appID)
+		if sender.appID != "" {
+			msg.Header.Set("upsub-app-id", sender.appID)
 		}
 
-		log.Print("[SEND] ", msg.Header.Get("upsub-channel"), " ", msg.Payload)
 		receiver.send <- msg
 	}
 }

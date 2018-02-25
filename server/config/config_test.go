@@ -33,7 +33,7 @@ func TestCreateDefaultConfig(t *testing.T) {
 		t.Error("PingInterval wasn't set to its default value")
 	}
 
-	if config.Apps.Length() != 1 {
+	if config.Auths.Length() != 1 {
 		t.Error("Apps should only in include the root app")
 	}
 
@@ -48,6 +48,10 @@ func TestCreateCustomConfig(t *testing.T) {
 	os.Setenv("CONNECTION_TIMEOUT", "5")
 	os.Setenv("READ_TIMEOUT", "5")
 	os.Setenv("WRITE_TIMEOUT", "5")
+	os.Setenv("AUTH_APP_ID", "root")
+	os.Setenv("AUTH_SECRET", "secret")
+	os.Setenv("AUTH_PUBLIC", "public")
+	os.Setenv("AUTH_ORIGINS", "http://localhost")
 
 	config := Create()
 
@@ -73,6 +77,22 @@ func TestCreateCustomConfig(t *testing.T) {
 
 	if config.PingInterval != (9*5*time.Second)/10 {
 		t.Error("PingInterval wasn't set to its new value")
+	}
+
+	if config.Auths.Find("root").ID != "root" {
+		t.Error("Auths.ID wasn't set correctly")
+	}
+
+	if config.Auths.Find("root").Secret != "secret" {
+		t.Error("Auths.Secret wasn't set correctly")
+	}
+
+	if config.Auths.Find("root").Public != "public" {
+		t.Error("Auths.Public wasn't set correctly")
+	}
+
+	if config.Auths.Find("root").Origins[0] != "http://localhost" {
+		t.Error("Auths.Origins wasn't set correctly")
 	}
 }
 
