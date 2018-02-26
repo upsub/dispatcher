@@ -20,7 +20,7 @@ type Dispatcher struct {
 	broker      *broker
 	config      *config.Config
 	connections map[*connection]bool
-	broadcast   chan func() ([]byte, *connection)
+	broadcast   chan func() (*message.Message, *connection)
 	register    chan *connection
 	unregister  chan *connection
 }
@@ -31,7 +31,7 @@ func Create(config *config.Config) *Dispatcher {
 		broker:      createBroker(config),
 		config:      config,
 		connections: make(map[*connection]bool),
-		broadcast:   make(chan func() ([]byte, *connection)),
+		broadcast:   make(chan func() (*message.Message, *connection)),
 		register:    make(chan *connection),
 		unregister:  make(chan *connection),
 	}
@@ -51,14 +51,7 @@ func (d *Dispatcher) Serve() {
 			d.disconnect(connection)
 		case payload := <-d.broadcast:
 			msg, connection := payload()
-			dmsg, err := message.Decode(msg)
-
-			if err != nil {
-				log.Print("[MESSAGE DECODE FAILED] ", err)
-				continue
-			}
-
-			d.ProcessMessage(dmsg, connection)
+			d.ProcessMessage(msg, connection)
 		}
 	}
 }
@@ -68,11 +61,12 @@ func (d *Dispatcher) connect(connection *connection) {
 	d.connections[connection] = true
 }
 
-func (d *Dispatcher) disconnect(connection *connection) {
-	log.Println("[UNREGISTER]", connection.id, connection.name)
-	if _, ok := d.connections[connection]; ok {
-		delete(d.connections, connection)
-		close(connection.send)
+func (d *Dispatcher) disconnect(conn *connection) {
+	log.Println("[UNREGISTER]", conn.id, conn.name)
+	if _, ok := d.connections[conn]; ok {
+		delete(d.connections, conn)
+		close(conn.send)
+		conn = nil
 	}
 }
 
