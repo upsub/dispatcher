@@ -33,10 +33,10 @@ The Dispatcher is configurable through environment variables, all available
 configuration options will be listed below.
 
 - `PORT (default: 4400)`: The port the dispatcher is listing for messages.
-- `MAX_MESSAGE_SIZE (default: no limit)`: The maximum size of a message in bytes.
-- `CONNECTION_TIMEOUT (default: 10s)`: The dispatcher will reject a client if it exceeds the connection timeout.
-- `READ_TIMEOUT (default: 10s)`: The dispatcher will terminate message if it wasn't received within the timeout.
-- `WRITE_TIMEOUT (default: 10s)`: The dispatcher will terminate message if it couldn't be written within the timeout.
+- `MAX_MESSAGE_SIZE (default: 512000)`: The maximum size of a message in bytes.
+- `CONNECTION_TIMEOUT (default: 30s)`: The dispatcher will reject a client if it exceeds the connection timeout.
+- `READ_TIMEOUT (default: 30s)`: The dispatcher will terminate message if it wasn't received within the timeout.
+- `WRITE_TIMEOUT (default: 30s)`: The dispatcher will terminate message if it couldn't be written within the timeout.
 
 ### Authentication configuration
 The dispatcher can authenticate connections with an `App ID`, `Secret Key` if it's normal client connection.

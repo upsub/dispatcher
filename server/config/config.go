@@ -23,11 +23,11 @@ type Config struct {
 // Create configuration
 func Create() *Config {
 	var (
-		port              = "4400"
-		maxMessageSize    int64
-		connectionTimeout = 10 * time.Second
-		readTimeout       = 10 * time.Second
-		writeTimeout      = 10 * time.Second
+		port                    = "4400"
+		maxMessageSize    int64 = 512 * 1000
+		connectionTimeout       = 30 * time.Second
+		readTimeout             = 30 * time.Second
+		writeTimeout            = 30 * time.Second
 	)
 
 	if value, ok := os.LookupEnv("PORT"); ok {

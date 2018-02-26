@@ -171,11 +171,8 @@ func (conn *connection) read() {
 		_, msg, err := conn.connection.ReadMessage()
 
 		if err != nil {
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway) {
-				// TODO should only print if max loglevel is set.
-				log.Printf("[ERROR] %v", err)
-			}
-			break
+			log.Printf("[READ ERROR] %v", err)
+			return
 		}
 
 		dmsg, err := message.Decode(msg)
