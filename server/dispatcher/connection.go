@@ -168,7 +168,7 @@ func (conn *connection) read() {
 	})
 
 	for {
-		_, message, err := conn.connection.ReadMessage()
+		_, msg, err := conn.connection.ReadMessage()
 
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway) {
@@ -178,8 +178,15 @@ func (conn *connection) read() {
 			break
 		}
 
-		conn.dispatcher.broadcast <- (func() ([]byte, *connection) {
-			return message, conn
+		dmsg, err := message.Decode(msg)
+
+		if err != nil {
+			log.Print("[MESSAGE DECODE FAILED] ", err)
+			continue
+		}
+
+		conn.dispatcher.broadcast <- (func() (*message.Message, *connection) {
+			return dmsg, conn
 		})
 	}
 }
