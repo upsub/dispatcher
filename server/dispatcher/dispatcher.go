@@ -68,11 +68,12 @@ func (d *Dispatcher) connect(connection *connection) {
 	d.connections[connection] = true
 }
 
-func (d *Dispatcher) disconnect(connection *connection) {
-	log.Println("[UNREGISTER]", connection.id, connection.name)
-	if _, ok := d.connections[connection]; ok {
-		delete(d.connections, connection)
-		close(connection.send)
+func (d *Dispatcher) disconnect(conn *connection) {
+	log.Println("[UNREGISTER]", conn.id, conn.name)
+	if _, ok := d.connections[conn]; ok {
+		delete(d.connections, conn)
+		close(conn.send)
+		conn = nil
 	}
 }
 
