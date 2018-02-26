@@ -13,23 +13,23 @@ func TestCreateDefaultConfig(t *testing.T) {
 		t.Error("Port wasn't set to its default value")
 	}
 
-	if config.MaxMessageSize != 0 {
-		t.Error("MaxMessageSize should be nil as default")
+	if config.MaxMessageSize != 512000 {
+		t.Error("MaxMessageSize should be 512000 as default")
 	}
 
-	if config.ConnectionTimeout != 10*time.Second {
+	if config.ConnectionTimeout != 30*time.Second {
 		t.Error("ConnectionTimeout wasn't set to its default value")
 	}
 
-	if config.ReadTimeout != 10*time.Second {
+	if config.ReadTimeout != 30*time.Second {
 		t.Error("ReadTimeout wasn't set to its default value")
 	}
 
-	if config.WriteTimeout != 10*time.Second {
+	if config.WriteTimeout != 30*time.Second {
 		t.Error("WriteTimeout wasn't set to its default value")
 	}
 
-	if config.PingInterval != (9*10)/10*time.Second {
+	if config.PingInterval != (9*30)/10*time.Second {
 		t.Error("PingInterval wasn't set to its default value")
 	}
 
@@ -109,23 +109,23 @@ func TestCreateInvalidConfig(t *testing.T) {
 		t.Error("Port wasn't set to its default value")
 	}
 
-	if config.MaxMessageSize != 0 {
+	if config.MaxMessageSize != 512000 {
 		t.Error("MaxMessageSize should be nil as default")
 	}
 
-	if config.ConnectionTimeout != 10*time.Second {
+	if config.ConnectionTimeout != 30*time.Second {
 		t.Error("ConnectionTimeout wasn't set to its default value")
 	}
 
-	if config.ReadTimeout != 10*time.Second {
+	if config.ReadTimeout != 30*time.Second {
 		t.Error("ReadTimeout wasn't set to its default value")
 	}
 
-	if config.WriteTimeout != 10*time.Second {
+	if config.WriteTimeout != 30*time.Second {
 		t.Error("WriteTimeout wasn't set to its default value")
 	}
 
-	if config.PingInterval != (9*10)/10*time.Second {
+	if config.PingInterval != (9*30)/10*time.Second {
 		t.Error("PingInterval wasn't set to its default value")
 	}
 }
