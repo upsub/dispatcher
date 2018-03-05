@@ -33,10 +33,6 @@ func TestCreateDefaultConfig(t *testing.T) {
 		t.Error("PingInterval wasn't set to its default value")
 	}
 
-	if config.Auths.Length() != 1 {
-		t.Error("Apps should only in include the root app")
-	}
-
 	if config.Nats != nil {
 		t.Error("Nats shouldn't be configured as default")
 	}
@@ -77,22 +73,6 @@ func TestCreateCustomConfig(t *testing.T) {
 
 	if config.PingInterval != (9*5*time.Second)/10 {
 		t.Error("PingInterval wasn't set to its new value")
-	}
-
-	if config.Auths.Find("root").ID != "root" {
-		t.Error("Auths.ID wasn't set correctly")
-	}
-
-	if config.Auths.Find("root").Secret != "secret" {
-		t.Error("Auths.Secret wasn't set correctly")
-	}
-
-	if config.Auths.Find("root").Public != "public" {
-		t.Error("Auths.Public wasn't set correctly")
-	}
-
-	if config.Auths.Find("root").Origins[0] != "http://localhost" {
-		t.Error("Auths.Origins wasn't set correctly")
 	}
 }
 

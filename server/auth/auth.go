@@ -1,4 +1,4 @@
-package config
+package auth
 
 // Rules describes what a auth os allowed to do
 type rules struct {
