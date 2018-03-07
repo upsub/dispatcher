@@ -77,6 +77,11 @@ func (d *Dispatcher) processInternalMessage(
 	msg *message.Message,
 	sender *connection,
 ) {
+	if d.store.Length() == 0 {
+		log.Print("[ERROR] Need a root auth to create new child auths")
+		return
+	}
+
 	switch msg.Header.Get("upsub-channel") {
 	case "upsub/auth/create":
 		if !d.store.Find(sender.appID).CanCreate() {
