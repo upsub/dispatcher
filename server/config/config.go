@@ -4,7 +4,6 @@ import (
 	"log"
 	"os"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -16,7 +15,7 @@ type Config struct {
 	ReadTimeout       time.Duration
 	WriteTimeout      time.Duration
 	PingInterval      time.Duration
-	Auths             *Auths
+	AuthDataPath      string
 	Nats              *NatsConfig
 }
 
@@ -70,21 +69,6 @@ func Create() *Config {
 		}
 	}
 
-	auths := createAuths()
-	root := CreateAuth(
-		os.Getenv("AUTH_APP_ID"),
-		os.Getenv("AUTH_SECRET"),
-		os.Getenv("AUTH_PUBLIC"),
-		strings.Split(os.Getenv("AUTH_ORIGINS"), ","),
-		nil,
-	)
-
-	auths.Append(root)
-
-	if root.ID != "" || root.Secret != "" {
-		root.SetRules(true, true, true)
-	}
-
 	return &Config{
 		Port:              port,
 		MaxMessageSize:    maxMessageSize,
@@ -92,7 +76,7 @@ func Create() *Config {
 		ReadTimeout:       readTimeout,
 		WriteTimeout:      writeTimeout,
 		PingInterval:      (readTimeout * 9) / 10,
-		Auths:             auths,
+		AuthDataPath:      "auths.gob",
 		Nats:              createNatsConfig(),
 	}
 }

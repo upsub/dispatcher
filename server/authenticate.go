@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/upsub/dispatcher/server/auth"
 	"github.com/upsub/dispatcher/server/config"
 	"github.com/upsub/dispatcher/server/dispatcher"
 	"github.com/upsub/dispatcher/server/util"
@@ -31,11 +32,21 @@ func reject(w http.ResponseWriter) {
 	http.Error(w, "Invalid authentication credentials", 401)
 }
 
-func authenticate(c *config.Config, d *dispatcher.Dispatcher, next handler) http.HandlerFunc {
+func authenticate(
+	c *config.Config,
+	d *dispatcher.Dispatcher,
+	store *auth.Store,
+	next handler,
+) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		parseQueryParams(r)
 
-		auth := c.Auths.Find(r.Header.Get("upsub-app-id"))
+		if store.Length() == 0 {
+			next(c, d, w, r)
+			return
+		}
+
+		auth := store.Find(r.Header.Get("upsub-app-id"))
 
 		if auth == nil {
 			reject(w)

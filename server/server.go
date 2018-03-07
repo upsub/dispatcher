@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"runtime"
 
+	"github.com/upsub/dispatcher/server/auth"
 	"github.com/upsub/dispatcher/server/config"
 	"github.com/upsub/dispatcher/server/controller"
 	"github.com/upsub/dispatcher/server/controller/v1"
@@ -13,7 +14,8 @@ import (
 // Listen starts the http server and creates a new dispatcher
 func Listen() {
 	conf := config.Create()
-	dispatcher := dispatcher.Create(conf)
+	store := auth.NewStore(conf)
+	dispatcher := dispatcher.Create(conf, store)
 	go dispatcher.Serve()
 
 	server := &http.Server{
@@ -22,8 +24,8 @@ func Listen() {
 		Addr:         ":" + conf.Port,
 	}
 
-	http.HandleFunc("/", authenticate(conf, dispatcher, controller.UpgradeHandler))
-	http.HandleFunc("/v1/send", authenticate(conf, dispatcher, v1.Send))
+	http.HandleFunc("/", authenticate(conf, dispatcher, store, controller.UpgradeHandler))
+	http.HandleFunc("/v1/send", authenticate(conf, dispatcher, store, v1.Send))
 	server.ListenAndServe()
 	runtime.Goexit()
 }

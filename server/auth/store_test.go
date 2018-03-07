@@ -1,4 +1,4 @@
-package config
+package auth
 
 import (
 	"testing"
@@ -6,59 +6,59 @@ import (
 	"github.com/upsub/dispatcher/server/message"
 )
 
-func TestAuthsAppend(t *testing.T) {
-	auths := createAuths()
-	auths.Append(
+func TestStoreAppend(t *testing.T) {
+	store := NewStore(nil)
+	store.Append(
 		CreateAuth("root", "secret", "public", []string{"http://localhost:4400"}, []*Auth{
 			CreateAuth("child-auth", "child-secret", "child-public", []string{"http://child-localhost"}, nil),
 		}),
 	)
 
-	if _, ok := auths.configs["root"]; !ok {
-		t.Error("Auths.Append didn't authend root auth")
+	if _, ok := store.auths["root"]; !ok {
+		t.Error("store.Append didn't authend root auth")
 	}
 
-	if _, ok := auths.configs["child-auth"]; !ok {
-		t.Error("Auths.Append didn't handle child auths")
+	if _, ok := store.auths["child-auth"]; !ok {
+		t.Error("store.Append didn't handle child Store")
 	}
 
-	if auths.Append(CreateAuth("root", "secret", "public", []string{"http://localhost:4400"}, nil)) != nil {
-		t.Error("Auths.Append didn't prevent id colisions")
+	if store.Append(CreateAuth("root", "secret", "public", []string{"http://localhost:4400"}, nil)) != nil {
+		t.Error("store.Append didn't prevent id colisions")
 	}
 }
 
-func TestAuthsFind(t *testing.T) {
-	auths := createAuths()
+func TestStoreFind(t *testing.T) {
+	store := NewStore(nil)
 	child := CreateAuth("child-auth", "child-secret", "child-public", []string{"http://child-localhost"}, nil)
 	root := CreateAuth("root", "secret", "public", []string{"http://localhost:4400"}, []*Auth{child})
-	auths.Append(root)
+	store.Append(root)
 
-	if auths.Find("child-auth") != child {
-		t.Error("Auths.Find didn't return the child auth instance")
+	if store.Find("child-auth") != child {
+		t.Error("store.Find didn't return the child auth instance")
 	}
 
-	if auths.Find("root") != root {
-		t.Error("Auths.Find didn't return the root auth instance")
+	if store.Find("root") != root {
+		t.Error("store.Find didn't return the root auth instance")
 	}
 }
 
-func TestAuthsLength(t *testing.T) {
-	auths := createAuths()
-	auths.Append(
+func TestStoreLength(t *testing.T) {
+	store := NewStore(nil)
+	store.Append(
 		CreateAuth("root", "secret", "public", []string{"http://localhost:4400"}, []*Auth{
 			CreateAuth("child-auth", "child-secret", "child-public", []string{"http://child-localhost"}, nil),
 		}),
 	)
 
-	if auths.Length() != 2 {
-		t.Error("Auths.Length didn't return length of the map")
+	if store.Length() != 2 {
+		t.Error("store.Length didn't return length of the map", store.Length())
 	}
 }
 
 func TestIsChildOf(t *testing.T) {
-	auths := createAuths()
-	auths.Append(CreateAuth("root", "secret", "public", []string{"http://localhost:4400"}, nil))
-	auths.Append(
+	store := NewStore(nil)
+	store.Append(CreateAuth("root", "secret", "public", []string{"http://localhost:4400"}, nil))
+	store.Append(
 		CreateAuth("parent", "secret", "public", []string{"http://localhost:4400"}, []*Auth{
 			CreateAuth("child", "child", "child", []string{"http://child"}, []*Auth{
 				CreateAuth("grand-child", "grand-child", "grand-child", []string{"http://grand-child"}, nil),
@@ -66,9 +66,9 @@ func TestIsChildOf(t *testing.T) {
 		}),
 	)
 
-	root := auths.Find("root")
-	parent := auths.Find("parent")
-	grandChild := auths.Find("grand-child")
+	root := store.Find("root")
+	parent := store.Find("parent")
+	grandChild := store.Find("grand-child")
 
 	if grandChild.ChildOf(root) != false {
 		t.Error("Auth.ChildOf Shouldn't be child of root")
@@ -84,15 +84,15 @@ func TestIsChildOf(t *testing.T) {
 
 }
 
-func helperCreateAuthFromMessage(auths *Auths) *Auth {
+func helperCreateAuthFromMessage(store *Store) *Auth {
 	msg := message.Create("{\"id\":\"upsub\",\"secret\":\"upsub-secret\",\"public\":\"upsub-public\",\"origins\":[\"http://localhost:3000\"],\"rules\":{\"create\":false,\"update\":false,\"delete\":false}}")
-	return auths.decode(msg)
+	return store.decode(msg)
 }
 
 func TestDecode(t *testing.T) {
-	auths := createAuths()
-	auths.Append(CreateAuth("root", "secret", "public", []string{"http://localhost:3000"}, nil))
-	auth := helperCreateAuthFromMessage(auths)
+	store := NewStore(nil)
+	store.Append(CreateAuth("root", "secret", "public", []string{"http://localhost:3000"}, nil))
+	auth := helperCreateAuthFromMessage(store)
 
 	if auth.ID != "upsub" {
 		t.Error("Auth.ID wasn't correctly")
@@ -112,10 +112,10 @@ func TestDecode(t *testing.T) {
 }
 
 func TestDecodeWithInvalidJSON(t *testing.T) {
-	auths := createAuths()
-	auths.Append(CreateAuth("root", "secret", "public", []string{"http://localhost:4400"}, nil))
+	store := NewStore(nil)
+	store.Append(CreateAuth("root", "secret", "public", []string{"http://localhost:4400"}, nil))
 	msg := message.Create("{\"id\"\"upsub\",\"secret\":\"upsub-secret\",\"public\":\"upsub-public\",\"origins\":[\"http://localhost:3000\"],\"parent\":\"root\",\"rules\":{\"create\":false,\"update\":false,\"delete\":false}}")
-	auth := auths.decode(msg)
+	auth := store.decode(msg)
 
 	if auth != nil {
 		t.Error("Should return nil when receiving invalid json")

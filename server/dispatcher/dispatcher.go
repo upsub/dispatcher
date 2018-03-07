@@ -4,6 +4,7 @@ import (
 	"log"
 	"strings"
 
+	"github.com/upsub/dispatcher/server/auth"
 	"github.com/upsub/dispatcher/server/config"
 	"github.com/upsub/dispatcher/server/message"
 	"github.com/upsub/dispatcher/server/util"
@@ -19,6 +20,7 @@ var reservedChannels = []string{
 type Dispatcher struct {
 	broker      *broker
 	config      *config.Config
+	store       *auth.Store
 	connections map[*connection]bool
 	broadcast   chan func() (*message.Message, *connection)
 	register    chan *connection
@@ -26,10 +28,11 @@ type Dispatcher struct {
 }
 
 // Create returns a new instance of the Dispatcher
-func Create(config *config.Config) *Dispatcher {
+func Create(config *config.Config, store *auth.Store) *Dispatcher {
 	return &Dispatcher{
 		broker:      createBroker(config),
 		config:      config,
+		store:       store,
 		connections: make(map[*connection]bool),
 		broadcast:   make(chan func() (*message.Message, *connection)),
 		register:    make(chan *connection),
@@ -74,27 +77,32 @@ func (d *Dispatcher) processInternalMessage(
 	msg *message.Message,
 	sender *connection,
 ) {
+	if d.store.Length() == 0 {
+		log.Print("[ERROR] Need a root auth to create new child auths")
+		return
+	}
+
 	switch msg.Header.Get("upsub-channel") {
 	case "upsub/auth/create":
-		if !d.config.Auths.Find(sender.appID).CanCreate() {
+		if !d.store.Find(sender.appID).CanCreate() {
 			log.Print("[AUTH] Not allowed to create")
 			return
 		}
-		d.config.Auths.CreateFromMessage(msg, sender.appID)
+		d.store.CreateFromMessage(msg, sender.appID)
 		break
 	case "upsub/auth/update":
-		if !d.config.Auths.Find(sender.appID).CanUpdate() {
+		if !d.store.Find(sender.appID).CanUpdate() {
 			log.Print("[AUTH] Not allowed to update")
 			return
 		}
-		d.config.Auths.UpdateFromMessage(msg)
+		d.store.UpdateFromMessage(msg)
 		break
 	case "upsub/auth/delete":
-		if !d.config.Auths.Find(sender.appID).CanDelete() {
+		if !d.store.Find(sender.appID).CanDelete() {
 			log.Print("[AUTH] Not allowed to delete")
 			return
 		}
-		d.config.Auths.DeleteFromMessage(msg)
+		d.store.DeleteFromMessage(msg)
 		for conn := range d.connections {
 			if conn.appID == strings.Replace(msg.Payload, "\"", "", 2) {
 				conn.close()
