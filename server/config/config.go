@@ -15,6 +15,7 @@ type Config struct {
 	ReadTimeout       time.Duration
 	WriteTimeout      time.Duration
 	PingInterval      time.Duration
+	AuthDataPath      string
 	Nats              *NatsConfig
 }
 
@@ -75,6 +76,7 @@ func Create() *Config {
 		ReadTimeout:       readTimeout,
 		WriteTimeout:      writeTimeout,
 		PingInterval:      (readTimeout * 9) / 10,
+		AuthDataPath:      "auths.gob",
 		Nats:              createNatsConfig(),
 	}
 }

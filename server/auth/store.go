@@ -23,6 +23,7 @@ func NewStore(conf *config.Config) *Store {
 	}
 
 	store := &Store{
+		conf:  conf,
 		auths: map[string]*Auth{},
 	}
 
@@ -198,7 +199,7 @@ func (store *Store) Remove(id string) bool {
 }
 
 func (store *Store) load() {
-	file, err := os.Open("./data.gob")
+	file, err := os.Open(store.conf.AuthDataPath)
 
 	if err != nil {
 		log.Print("[ERROR] ", err)
@@ -255,7 +256,7 @@ func (store *Store) load() {
 }
 
 func (store *Store) save() {
-	file, err := os.Create("./data.gob")
+	file, err := os.Create(store.conf.AuthDataPath)
 
 	if err != nil {
 		log.Print("[ERROR] ", err)
