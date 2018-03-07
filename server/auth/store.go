@@ -248,10 +248,6 @@ func (store *Store) load() {
 		}
 	}
 
-	for id, auth := range store.auths {
-		log.Print(id, ": ", auth)
-	}
-
 	file.Close()
 }
 
