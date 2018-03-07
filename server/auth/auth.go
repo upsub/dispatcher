@@ -18,6 +18,21 @@ type Auth struct {
 	rules    *rules
 }
 
+// serializedAuth
+type serializedAuth struct {
+	ID       string
+	Secret   string
+	Public   string
+	Origins  []string
+	Parent   string
+	Children []string
+	Rules    struct {
+		Create bool
+		Update bool
+		Delete bool
+	}
+}
+
 // SetRules set the rules of what the auth is allowed to do
 func (auth *Auth) SetRules(create bool, update bool, delete bool) {
 	auth.rules.create = create
@@ -40,6 +55,17 @@ func (auth *Auth) CanDelete() bool {
 	return auth.rules.delete
 }
 
+// HasChild
+func (parent *Auth) HasChild(child *Auth) bool {
+	for _, c := range parent.Children {
+		if c.ID == child.ID {
+			return true
+		}
+	}
+
+	return false
+}
+
 // RemoveChild remove a child from the auth
 func (auth *Auth) RemoveChild(child *Auth) {
 	newChildren := []*Auth{}
@@ -51,6 +77,36 @@ func (auth *Auth) RemoveChild(child *Auth) {
 	}
 
 	auth.Children = newChildren
+}
+
+func (auth *Auth) serialize() serializedAuth {
+	serialized := serializedAuth{
+		auth.ID,
+		auth.Secret,
+		auth.Public,
+		auth.Origins,
+		"",
+		[]string{},
+		struct {
+			Create bool
+			Update bool
+			Delete bool
+		}{
+			auth.rules.create,
+			auth.rules.update,
+			auth.rules.delete,
+		},
+	}
+
+	if auth.Parent != nil {
+		serialized.Parent = auth.Parent.ID
+	}
+
+	for _, child := range auth.Children {
+		serialized.Children = append(serialized.Children, child.ID)
+	}
+
+	return serialized
 }
 
 // CreateAuth creates a new app config

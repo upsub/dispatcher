@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"encoding/gob"
 	"encoding/json"
 	"log"
 	"os"
@@ -23,6 +24,12 @@ func NewStore(conf *config.Config) *Store {
 
 	store := &Store{
 		auths: map[string]*Auth{},
+	}
+
+	store.load()
+
+	if store.Length() > 0 {
+		return store
 	}
 
 	root := CreateAuth(
@@ -90,7 +97,11 @@ func (store *Store) decode(msg *message.Message) *Auth {
 		Public  string
 		Origins []string
 		Parent  string
-		rules   *rules
+		Rules   struct {
+			Create bool
+			Update bool
+			Delete bool
+		}
 	}
 
 	err := json.Unmarshal([]byte(msg.Payload), &decoded)
@@ -107,7 +118,11 @@ func (store *Store) decode(msg *message.Message) *Auth {
 		decoded.Origins,
 		store.Find(decoded.Parent),
 		nil,
-		decoded.rules,
+		&rules{
+			decoded.Rules.Create,
+			decoded.Rules.Update,
+			decoded.Rules.Delete,
+		},
 	}
 }
 
@@ -119,10 +134,14 @@ func (store *Store) CreateFromMessage(msg *message.Message, parentID string) boo
 		return false
 	}
 
-	store.Append(auth)
-
 	auth.Parent = store.Find(parentID)
-	auth.Parent.Children = append(auth.Parent.Children, auth)
+
+	if !auth.Parent.HasChild(auth) {
+		auth.Parent.Children = append(auth.Parent.Children, auth)
+	}
+
+	store.Append(auth)
+	store.save()
 
 	return true
 }
@@ -144,6 +163,8 @@ func (store *Store) UpdateFromMessage(msg *message.Message) bool {
 	oldAuth.Public = newAuth.Public
 	oldAuth.Origins = newAuth.Origins
 	oldAuth.rules = newAuth.rules
+
+	store.save()
 
 	return true
 }
@@ -171,5 +192,83 @@ func (store *Store) Remove(id string) bool {
 
 	delete(store.auths, auth.ID)
 
+	store.save()
+
 	return true
+}
+
+func (store *Store) load() {
+	file, err := os.Open("./data.gob")
+
+	if err != nil {
+		log.Print("[ERROR] ", err)
+		return
+	}
+
+	decoded := map[string]serializedAuth{}
+	decoder := gob.NewDecoder(file)
+	err = decoder.Decode(&decoded)
+
+	if err != nil {
+		log.Print("[ERROR] ", err)
+		return
+	}
+
+	for id := range decoded {
+		store.auths[id] = nil
+	}
+
+	for id, serialized := range decoded {
+		auth := CreateAuth(
+			serialized.ID,
+			serialized.Secret,
+			serialized.Public,
+			serialized.Origins,
+			nil,
+		)
+
+		store.auths[id] = auth
+
+		auth.SetRules(
+			serialized.Rules.Create,
+			serialized.Rules.Update,
+			serialized.Rules.Delete,
+		)
+	}
+
+	for id, serialized := range decoded {
+		auth := store.auths[id]
+		if serialized.Parent != auth.ID {
+			auth.Parent = store.Find(serialized.Parent)
+		}
+
+		for _, serializedChild := range serialized.Children {
+			auth.Children = append(auth.Children, store.Find(serializedChild))
+		}
+	}
+
+	for id, auth := range store.auths {
+		log.Print(id, ": ", auth)
+	}
+
+	file.Close()
+}
+
+func (store *Store) save() {
+	file, err := os.Create("./data.gob")
+
+	if err != nil {
+		log.Print("[ERROR] ", err)
+		return
+	}
+
+	serialized := map[string]serializedAuth{}
+
+	for id, auth := range store.auths {
+		serialized[id] = auth.serialize()
+	}
+
+	encoder := gob.NewEncoder(file)
+	encoder.Encode(serialized)
+	file.Close()
 }
