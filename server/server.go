@@ -3,6 +3,7 @@ package server
 import (
 	"net/http"
 	"runtime"
+	"strconv"
 
 	"github.com/upsub/dispatcher/server/auth"
 	"github.com/upsub/dispatcher/server/config"
@@ -21,7 +22,7 @@ func Listen() {
 	server := &http.Server{
 		ReadTimeout:  conf.ConnectionTimeout,
 		WriteTimeout: conf.ConnectionTimeout,
-		Addr:         ":" + conf.Port,
+		Addr:         ":" + strconv.Itoa(int(conf.Port)),
 	}
 
 	http.HandleFunc("/", authenticate(conf, dispatcher, store, controller.UpgradeHandler))

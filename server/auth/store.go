@@ -199,6 +199,10 @@ func (store *Store) Remove(id string) bool {
 }
 
 func (store *Store) load() {
+	if _, err := os.Stat(store.conf.AuthDataPath); os.IsNotExist(err) {
+		return
+	}
+
 	file, err := os.Open(store.conf.AuthDataPath)
 
 	if err != nil {
@@ -246,10 +250,6 @@ func (store *Store) load() {
 		for _, serializedChild := range serialized.Children {
 			auth.Children = append(auth.Children, store.Find(serializedChild))
 		}
-	}
-
-	for id, auth := range store.auths {
-		log.Print(id, ": ", auth)
 	}
 
 	file.Close()

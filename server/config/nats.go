@@ -1,17 +1,21 @@
 package config
 
-import "os"
+import (
+	"log"
+	"os"
+	"strconv"
+)
 
 // NatsConfig configuration for the NATS message bus
 type NatsConfig struct {
 	Host string
-	Port string
+	Port int64
 }
 
 func createNatsConfig() *NatsConfig {
 	var (
 		host = "localhost"
-		port = "4222"
+		port = int64(4222)
 		set  = false
 	)
 
@@ -22,7 +26,11 @@ func createNatsConfig() *NatsConfig {
 
 	if value, ok := os.LookupEnv("NATS_PORT"); ok {
 		set = true
-		port = value
+		if num, err := strconv.ParseInt(value, 10, 64); err == nil {
+			port = num
+		} else {
+			log.Print("Invalid NATS_PORT given")
+		}
 	}
 
 	if !set {
