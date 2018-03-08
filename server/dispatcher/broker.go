@@ -2,6 +2,7 @@ package dispatcher
 
 import (
 	"log"
+	"strconv"
 
 	nats "github.com/nats-io/go-nats"
 	"github.com/upsub/dispatcher/server/config"
@@ -21,7 +22,7 @@ func createBroker(config *config.Config) *broker {
 		return &broker{nil, config, make(map[string][]listener)}
 	}
 
-	connection, err := nats.Connect("nats://" + config.Nats.Host + ":" + config.Nats.Port)
+	connection, err := nats.Connect("nats://" + config.Nats.Host + ":" + strconv.Itoa(int(config.Nats.Port)))
 
 	if err != nil {
 		log.Print("[ERROR] [NATS] ", err)

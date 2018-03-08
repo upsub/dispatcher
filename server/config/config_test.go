@@ -9,7 +9,7 @@ import (
 func TestCreateDefaultConfig(t *testing.T) {
 	config := Create()
 
-	if config.Port != "4400" {
+	if config.Port != int64(4400) {
 		t.Error("Port wasn't set to its default value")
 	}
 
@@ -51,7 +51,7 @@ func TestCreateCustomConfig(t *testing.T) {
 
 	config := Create()
 
-	if config.Port != "4401" {
+	if config.Port != int64(4401) {
 		t.Error("Port wasn't set to its new value")
 	}
 
@@ -85,7 +85,7 @@ func TestCreateInvalidConfig(t *testing.T) {
 
 	config := Create()
 
-	if config.Port != "4400" {
+	if config.Port != int64(4400) {
 		t.Error("Port wasn't set to its default value")
 	}
 

@@ -15,7 +15,7 @@ func TestCreateNatsConfig(t *testing.T) {
 		t.Error("NatsConfig.Host wasn't set correctly")
 	}
 
-	if nats.Port != "1000" {
+	if nats.Port != int64(1000) {
 		t.Error("NatsConfig.Port wasn't set correctly")
 	}
 }

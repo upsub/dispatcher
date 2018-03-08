@@ -199,6 +199,10 @@ func (store *Store) Remove(id string) bool {
 }
 
 func (store *Store) load() {
+	if _, err := os.Stat(store.conf.AuthDataPath); os.IsNotExist(err) {
+		return
+	}
+
 	file, err := os.Open(store.conf.AuthDataPath)
 
 	if err != nil {
