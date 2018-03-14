@@ -35,10 +35,13 @@ func Send(
 		return
 	}
 
+	w.WriteHeader(200)
+
 	d.ProcessMessage(message, dispatcher.CreateConnection(
 		r.Header.Get("Sec-Websocket-Key"),
 		r.Header.Get("upsub-app-id"),
 		r.Header.Get("upsub-connection-name"),
+		r.Header.Get("upsub-protocol"),
 		nil,
 		config,
 		d,
@@ -46,4 +49,5 @@ func Send(
 			"wildcard": false,
 		},
 	))
+
 }

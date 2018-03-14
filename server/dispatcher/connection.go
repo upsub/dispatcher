@@ -15,6 +15,7 @@ type connection struct {
 	id            string
 	name          string
 	appID         string
+	protocol      string
 	support       map[string]bool
 	subscriptions []string
 	send          chan *message.Message
@@ -28,6 +29,7 @@ func CreateConnection(
 	id string,
 	appID string,
 	name string,
+	protocol string,
 	wsConnection *websocket.Conn,
 	conn *config.Config,
 	d *Dispatcher,
@@ -37,6 +39,7 @@ func CreateConnection(
 		id:            id,
 		name:          name,
 		appID:         appID,
+		protocol:      protocol,
 		support:       support,
 		subscriptions: []string{},
 		send:          make(chan *message.Message),
@@ -125,15 +128,10 @@ func (conn *connection) write() {
 				return
 			}
 
-			encoded, err := msg.Encode()
+			encoded := msg.Encode()
 
-			if err != nil {
-				log.Print("[FAILED]", err)
-				continue
-			}
-
-			if msg.Header.Get("upsub-message-type") == "text" {
-				log.Print("[SEND] ", msg.Header.Get("upsub-channel"), " ", msg.Payload)
+			if msg.Type == message.TEXT {
+				log.Print("[SEND] ", msg.Channel, " ", msg.Payload)
 			}
 
 			writer.Write(encoded)
@@ -225,7 +223,7 @@ func (conn *connection) getWildcardSubscriptions() []string {
 }
 
 func (conn *connection) shouldReceive(msg *message.Message) bool {
-	channel := msg.Header.Get("upsub-channel")
+	channel := msg.Channel
 
 	if !conn.support["wildcard"] {
 		return util.Contains(conn.subscriptions, channel)
@@ -233,7 +231,7 @@ func (conn *connection) shouldReceive(msg *message.Message) bool {
 
 	if wildcards := conn.getWildcardSubscriptions(); len(wildcards) > 0 {
 		channel = compareAgainstWildcardSubscriptions(wildcards, channel)
-		msg.Header.Set("upsub-channel", channel)
+		msg.Channel = channel
 	}
 
 	for _, channel := range strings.Split(channel, ",") {

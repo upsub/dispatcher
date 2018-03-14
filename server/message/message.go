@@ -8,15 +8,19 @@ import (
 
 // Message structure
 type Message struct {
-	Header     *Header `json:"headers"`
-	Payload    string  `json:"payload"`
-	FromBroker bool    `json:"-"`
+	Type       string
+	Channel    string
+	Header     Header
+	Payload    string
+	FromBroker bool
 }
 
 // Create a new message
 func Create(payload string) *Message {
 	return &Message{
-		&Header{},
+		TEXT,
+		"",
+		Header{},
 		payload,
 		false,
 	}
@@ -24,30 +28,29 @@ func Create(payload string) *Message {
 
 // Text return a new text message
 func Text(channel string, payload string) *Message {
-	header := &Header{
-		"upsub-message-type": TEXT,
-		"upsub-channel":      channel,
+	return &Message{TEXT, channel, Header{}, payload, false}
+}
+
+// Json return a new json message
+func Json(channel string, payload interface{}) *Message {
+	encodedPayload, err := json.Marshal(payload)
+
+	if err != nil {
+		log.Print("[ERROR] ", err)
+		return nil
 	}
 
-	return &Message{header, payload, false}
+	return &Message{JSON, channel, Header{}, string(encodedPayload), false}
 }
 
 // Ping return a new ping message
 func Ping() *Message {
-	header := &Header{
-		"upsub-message-type": PING,
-	}
-
-	return &Message{header, "", false}
+	return &Message{PING, "", Header{}, "", false}
 }
 
 // Pong returns a new pong message
 func Pong() *Message {
-	header := &Header{
-		"upsub-message-type": PONG,
-	}
-
-	return &Message{header, "", false}
+	return &Message{PONG, "", Header{}, "", false}
 }
 
 // ResponseAction return a new response action
@@ -56,40 +59,55 @@ func ResponseAction(channels []string, action string) *Message {
 		channels[i] = channel + ":" + action
 	}
 
-	header := &Header{
-		"upsub-message-type": TEXT,
-		"upsub-channel":      strings.Join(channels, ","),
+	return &Message{
+		TEXT,
+		strings.Join(channels, ","),
+		Header{},
+		strings.Join(channels, ","),
+		false,
 	}
-
-	return &Message{header, "\"" + strings.Join(channels, ",") + "\"", false}
 }
 
 // Decode from byte array to Message
 func Decode(message []byte) (*Message, error) {
-	var decodedMessage *Message
-	err := json.Unmarshal(message, &decodedMessage)
-	return decodedMessage, err
+	return parse(message)
 }
 
 // Encode Message to a byte array
-func Encode(message *Message) ([]byte, error) {
-	return json.Marshal(message)
+func Encode(message *Message) []byte {
+	msg := message.Type + " " + message.Channel
+
+	for key, value := range message.Header {
+		msg += "\n" + key + ": " + value
+	}
+
+	if message.Payload != "" {
+		msg += "\n\n" + message.Payload
+	}
+
+	return []byte(msg)
 }
 
 // Encode the message instance and return it in an array of bytes
-func (m *Message) Encode() ([]byte, error) {
+func (m *Message) Encode() []byte {
 	return Encode(m)
 }
 
 // ParseBatch message batch and return an array of message objects
 func (m *Message) ParseBatch() []*Message {
-	messages := []*Message{}
+	messages := []string{}
 	err := json.Unmarshal([]byte(m.Payload), &messages)
+	decodedMessages := []*Message{}
 
 	if err != nil {
 		log.Print("[BATCH INVALID] ", err)
-		return messages
+		return decodedMessages
 	}
 
-	return messages
+	for _, msg := range messages {
+		decoded, _ := Decode([]byte(msg))
+		decodedMessages = append(decodedMessages, decoded)
+	}
+
+	return decodedMessages
 }

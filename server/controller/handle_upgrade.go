@@ -33,6 +33,7 @@ func UpgradeHandler(
 		r.Header.Get("Sec-Websocket-Key"),
 		r.Header.Get("upsub-app-id"),
 		r.Header.Get("upsub-connection-name"),
+		r.Header.Get("upsub-protocol"),
 		conn,
 		config,
 		d,

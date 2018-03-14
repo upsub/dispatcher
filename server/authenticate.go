@@ -18,6 +18,7 @@ func parseQueryParams(r *http.Request) {
 		"upsub-secret",
 		"upsub-public",
 		"upsub-connection-name",
+		"upsub-protocol",
 	}
 
 	if query := r.URL.Query(); len(query) > 0 {

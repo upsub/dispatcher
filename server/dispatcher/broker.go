@@ -51,12 +51,7 @@ func createBroker(config *config.Config) *broker {
 }
 
 func (b *broker) send(channel string, msg *message.Message) {
-	encodedPayload, err := message.Encode(msg)
-
-	if err != nil {
-		log.Print("[FAILED] [NATS] ", err)
-		return
-	}
+	encodedPayload := message.Encode(msg)
 
 	b.connection.Publish(channel, encodedPayload)
 }
