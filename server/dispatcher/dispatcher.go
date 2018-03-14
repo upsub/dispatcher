@@ -175,7 +175,7 @@ func (d *Dispatcher) Dispatch(
 	}
 
 	for receiver := range d.connections {
-		res := message.Text(msg.Channel, msg.Payload)
+		res := message.Create(msg.Type, msg.Channel, msg.Header, msg.Payload)
 
 		if sender != nil && sender == receiver {
 			continue

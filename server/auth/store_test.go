@@ -85,7 +85,7 @@ func TestIsChildOf(t *testing.T) {
 }
 
 func helperCreateAuthFromMessage(store *Store) *Auth {
-	msg := message.Create("{\"id\":\"upsub\",\"secret\":\"upsub-secret\",\"public\":\"upsub-public\",\"origins\":[\"http://localhost:3000\"],\"rules\":{\"create\":false,\"update\":false,\"delete\":false}}")
+	msg := message.Create(message.TEXT, "channel", message.Header{}, "{\"id\":\"upsub\",\"secret\":\"upsub-secret\",\"public\":\"upsub-public\",\"origins\":[\"http://localhost:3000\"],\"rules\":{\"create\":false,\"update\":false,\"delete\":false}}")
 	return store.decode(msg)
 }
 
@@ -114,7 +114,7 @@ func TestDecode(t *testing.T) {
 func TestDecodeWithInvalidJSON(t *testing.T) {
 	store := NewStore(nil)
 	store.Append(CreateAuth("root", "secret", "public", []string{"http://localhost:4400"}, nil))
-	msg := message.Create("{\"id\"\"upsub\",\"secret\":\"upsub-secret\",\"public\":\"upsub-public\",\"origins\":[\"http://localhost:3000\"],\"parent\":\"root\",\"rules\":{\"create\":false,\"update\":false,\"delete\":false}}")
+	msg := message.Create(message.TEXT, "channel", message.Header{}, "{\"id\"\"upsub\",\"secret\":\"upsub-secret\",\"public\":\"upsub-public\",\"origins\":[\"http://localhost:3000\"],\"parent\":\"root\",\"rules\":{\"create\":false,\"update\":false,\"delete\":false}}")
 	auth := store.decode(msg)
 
 	if auth != nil {

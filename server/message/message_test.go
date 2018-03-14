@@ -5,9 +5,21 @@ import (
 )
 
 func TestCreate(t *testing.T) {
-	msg := Create("testing")
+	msg := Create(TEXT, "channel", Header{"key": "value"}, "payload")
 
-	if msg.Payload != "testing" {
+	if msg.Type != "text" {
+		t.Errorf("message wasn't created correctly")
+	}
+
+	if msg.Channel != "channel" {
+		t.Errorf("message wasn't created correctly")
+	}
+
+	if msg.Header.Get("key") != "value" {
+		t.Errorf("message wasn't created correctly")
+	}
+
+	if msg.Payload != "payload" {
 		t.Errorf("message wasn't created correctly")
 	}
 }
@@ -117,7 +129,7 @@ func TestParseBatchFail(t *testing.T) {
 }
 
 func TestStaticEncode(t *testing.T) {
-	msg := Create("payload")
+	msg := Create(TEXT, "channel", Header{}, "payload")
 	encoded := Encode(msg)
 	if len(encoded) == 0 {
 		t.Error("static encode failed")
@@ -125,7 +137,7 @@ func TestStaticEncode(t *testing.T) {
 }
 
 func TestEncode(t *testing.T) {
-	msg := Create("payload")
+	msg := Create(TEXT, "channel", Header{}, "payload")
 	encoded := msg.Encode()
 	if len(encoded) == 0 {
 		t.Error("static encode failed")

@@ -16,11 +16,11 @@ type Message struct {
 }
 
 // Create a new message
-func Create(payload string) *Message {
+func Create(msgType string, channel string, header Header, payload string) *Message {
 	return &Message{
-		TEXT,
-		"",
-		Header{},
+		msgType,
+		channel,
+		header,
 		payload,
 		false,
 	}
