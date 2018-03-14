@@ -175,6 +175,8 @@ func (d *Dispatcher) Dispatch(
 	}
 
 	for receiver := range d.connections {
+		res := message.Text(msg.Channel, msg.Payload)
+
 		if sender != nil && sender == receiver {
 			continue
 		}
@@ -183,14 +185,14 @@ func (d *Dispatcher) Dispatch(
 			continue
 		}
 
-		if !receiver.shouldReceive(msg) {
+		if !receiver.shouldReceive(res) {
 			continue
 		}
 
 		if sender.appID != "" {
-			msg.Header.Set("upsub-app-id", sender.appID)
+			res.Header.Set("upsub-app-id", sender.appID)
 		}
 
-		receiver.send <- msg
+		receiver.send <- res
 	}
 }
