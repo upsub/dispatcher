@@ -75,7 +75,7 @@ func Decode(message []byte) (*Message, error) {
 
 // Encode Message to a byte array
 func Encode(message *Message) []byte {
-	msg := message.Type + " " + message.Channel
+	msg := strings.TrimSpace(message.Type + " " + message.Channel)
 
 	for key, value := range message.Header {
 		msg += "\n" + key + ": " + value
