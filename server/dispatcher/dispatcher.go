@@ -82,7 +82,7 @@ func (d *Dispatcher) processInternalMessage(
 		return
 	}
 
-	switch msg.Header.Get("upsub-channel") {
+	switch msg.Channel {
 	case "upsub/auth/create":
 		if !d.store.Find(sender.appID).CanCreate() {
 			log.Print("[AUTH] Not allowed to create")
@@ -104,7 +104,7 @@ func (d *Dispatcher) processInternalMessage(
 		}
 		d.store.DeleteFromMessage(msg)
 		for conn := range d.connections {
-			if conn.appID == strings.Replace(msg.Payload, "\"", "", 2) {
+			if conn.appID == msg.Payload {
 				conn.close()
 			}
 		}
@@ -122,42 +122,41 @@ func (d *Dispatcher) ProcessMessage(
 		return
 	}
 
-	msgType := msg.Header.Get("upsub-message-type")
+	msgType := msg.Type
 
 	switch msgType {
 	case message.SUBSCRIBE:
 		log.Print("[SUBSCRIBE] ", msg.Payload)
-		channels := strings.Split(strings.Replace(msg.Payload, "\"", "", 2), ",")
+		channels := strings.Split(msg.Payload, ",")
 		sender.subscribe(channels)
-		break
 	case message.UNSUBSCRIBE:
 		log.Print("[UNSUBSCRIBE] ", msg.Payload)
-		channels := strings.Split(strings.Replace(msg.Payload, "\"", "", 2), ",")
+		channels := strings.Split(msg.Payload, ",")
 		sender.unsubscribe(channels)
-		break
 	case message.PING:
 		log.Print("[PING] ", msg.Payload)
 		sender.send <- message.Pong()
-		break
 	case message.BATCH:
 		log.Print("[BATCH] ", msg.Payload)
 		for _, msg := range msg.ParseBatch() {
 			d.ProcessMessage(msg, sender)
 		}
-		break
+	case message.JSON:
+		fallthrough
 	case message.TEXT:
-		log.Print("[RECEIVED] ", msg.Header.Get("upsub-channel"), " ", msg.Payload)
+		log.Print("[RECEIVED] ", msg.Channel, " ", msg.Payload)
 
-		if !strings.Contains(msg.Header.Get("upsub-channel"), ",") {
+		if !strings.Contains(msg.Channel, ",") {
 			d.Dispatch(msg, sender)
 			return
 		}
 
-		channels := strings.Split(msg.Header.Get("upsub-channel"), ",")
+		channels := strings.Split(msg.Channel, ",")
 
 		for _, channel := range channels {
 			d.Dispatch(message.Text(channel, msg.Payload), sender)
 		}
+
 	}
 }
 
@@ -170,12 +169,14 @@ func (d *Dispatcher) Dispatch(
 		d.broker.send("upsub.dispatcher.message", msg)
 	}
 
-	if util.Contains(reservedChannels, msg.Header.Get("upsub-channel")) {
+	if util.Contains(reservedChannels, msg.Channel) {
 		d.processInternalMessage(msg, sender)
 		return
 	}
 
 	for receiver := range d.connections {
+		res := message.Create(msg.Type, msg.Channel, msg.Header, msg.Payload)
+
 		if sender != nil && sender == receiver {
 			continue
 		}
@@ -184,14 +185,14 @@ func (d *Dispatcher) Dispatch(
 			continue
 		}
 
-		if !receiver.shouldReceive(msg) {
+		if !receiver.shouldReceive(res) {
 			continue
 		}
 
 		if sender.appID != "" {
-			msg.Header.Set("upsub-app-id", sender.appID)
+			res.Header.Set("upsub-app-id", sender.appID)
 		}
 
-		receiver.send <- msg
+		receiver.send <- res
 	}
 }

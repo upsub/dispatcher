@@ -4,6 +4,9 @@ const (
 	// TEXT message type
 	TEXT = "text"
 
+	// JSON message type
+	JSON = "json"
+
 	// BATCH message type
 	BATCH = "batch"
 
