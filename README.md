@@ -1,7 +1,9 @@
 # Dispatcher
 [![Version](https://img.shields.io/github/release/upsub/dispatcher.svg)](https://github.com/upsub/dispatcher/releases)
 [![Build Status](https://travis-ci.org/upsub/dispatcher.svg?branch=master)](https://travis-ci.org/upsub/dispatcher)
+[![GoDoc](https://godoc.org/github.com/upsub/dispatcher?status.svg)](https://godoc.org/github.com/upsub/dispatcher)
 [![Go Report Card](https://goreportcard.com/badge/github.com/upsub/dispatcher)](https://goreportcard.com/report/github.com/upsub/dispatcher)
+
 
 > A high performance Pub/Sub messaging server for the Web and Cloud.
 
