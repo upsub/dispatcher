@@ -60,12 +60,10 @@ func (d *Dispatcher) Serve() {
 }
 
 func (d *Dispatcher) connect(connection *connection) {
-	log.Println("[REGISTER]", connection.id, connection.name)
 	d.connections[connection] = true
 }
 
 func (d *Dispatcher) disconnect(conn *connection) {
-	log.Println("[UNREGISTER]", conn.id, conn.name)
 	if _, ok := d.connections[conn]; ok {
 		delete(d.connections, conn)
 		close(conn.send)
@@ -126,26 +124,20 @@ func (d *Dispatcher) ProcessMessage(
 
 	switch msgType {
 	case message.SUBSCRIBE:
-		log.Print("[SUBSCRIBE] ", msg.Payload)
 		channels := strings.Split(msg.Payload, ",")
 		sender.subscribe(channels)
 	case message.UNSUBSCRIBE:
-		log.Print("[UNSUBSCRIBE] ", msg.Payload)
 		channels := strings.Split(msg.Payload, ",")
 		sender.unsubscribe(channels)
 	case message.PING:
-		log.Print("[PING] ", msg.Payload)
 		sender.send <- message.Pong()
 	case message.BATCH:
-		log.Print("[BATCH] ", msg.Payload)
 		for _, msg := range msg.ParseBatch() {
 			d.ProcessMessage(msg, sender)
 		}
 	case message.JSON:
 		fallthrough
 	case message.TEXT:
-		log.Print("[RECEIVED] ", msg.Channel, " ", msg.Payload)
-
 		if !strings.Contains(msg.Channel, ",") {
 			d.Dispatch(msg, sender)
 			return

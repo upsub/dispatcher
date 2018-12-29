@@ -130,10 +130,6 @@ func (conn *connection) write() {
 
 			encoded := msg.Encode()
 
-			if msg.Type == message.TEXT {
-				log.Print("[SEND] ", msg.Channel, " ", msg.Payload)
-			}
-
 			writer.Write(encoded)
 
 			if err := writer.Close(); err != nil {
